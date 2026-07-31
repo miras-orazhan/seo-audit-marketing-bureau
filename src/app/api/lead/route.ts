@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimitResponse } from '@/lib/rate-limit';
 import { appendLead, isGoogleSheetsConfigured } from '@/lib/google-sheets';
+import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -94,7 +95,28 @@ export async function POST(req: NextRequest) {
       console.warn('[/api/lead] Telegram отправка не удалась, но продолжаем сохранение в Sheets');
     }
 
-    // Сохраняем в Google Sheets (для аналитики и истории)
+    // 1. Сохраняем в PostgreSQL
+    try {
+      const { createHash } = await import('node:crypto');
+      const xff = req.headers.get('x-forwarded-for');
+      const ip = xff?.split(',')[0]?.trim() || 'unknown';
+      const ipHash = createHash('sha256').update(ip + process.env.DATABASE_URL).digest('hex').slice(0, 16);
+
+      await db.lead.create({
+        data: {
+          name,
+          phone,
+          email: email || null,
+          site: site || null,
+          message: message || null,
+          ipHash,
+        },
+      });
+    } catch (dbErr) {
+      console.error('[/api/lead] DB save failed:', dbErr);
+    }
+
+    // 2. Сохраняем в Google Sheets
     if (isGoogleSheetsConfigured()) {
       const saved = await appendLead({
         date: new Date().toLocaleString('ru-RU'),
