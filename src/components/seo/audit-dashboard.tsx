@@ -24,6 +24,8 @@ import {
   Copy,
   Check,
   ArrowRight,
+  Search,
+  Link,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -111,7 +113,7 @@ export function AuditDashboard({ onLeadClick }: { onLeadClick?: () => void }) {
         </div>
       </motion.div>
 
-      {/* Score summary */}
+      {/* Score summary — PSI-стиль с 4 категориями */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -120,7 +122,7 @@ export function AuditDashboard({ onLeadClick }: { onLeadClick?: () => void }) {
       >
         <Card className="lg:col-span-1">
           <CardContent className="flex flex-col items-center justify-center py-5 sm:py-6">
-            <ScoreRing score={report.overallScore} size={100} label="Overall" />
+            <ScoreRing score={report.overallScore} size={120} label="Overall" />
             <p className="mt-3 text-xs text-muted-foreground">Общий скор аудита</p>
           </CardContent>
         </Card>
@@ -129,6 +131,8 @@ export function AuditDashboard({ onLeadClick }: { onLeadClick?: () => void }) {
           <CardContent className="grid grid-cols-2 gap-4 py-6 sm:grid-cols-4">
             <ScoreCard title="Technical" score={report.technicalScore} />
             <ScoreCard title="Content" score={report.contentScore} />
+            <ScoreCard title="AEO" score={report.aeoScore || 0} />
+            <ScoreCard title="GEO" score={report.geoScore || 0} />
             <MetricCard
               title="Критичных"
               value={issuesBySeverity.critical.length}
@@ -225,6 +229,18 @@ export function AuditDashboard({ onLeadClick }: { onLeadClick?: () => void }) {
             <TabsTrigger value="headings" className="gap-1.5 shrink-0">
               <ListTree className="h-3.5 w-3.5" />
               H1–H6 ({page.headings.length})
+            </TabsTrigger>
+            <TabsTrigger value="semantic" className="gap-1.5 shrink-0">
+              <Search className="h-3.5 w-3.5" />
+              Семантика
+            </TabsTrigger>
+            <TabsTrigger value="readability" className="gap-1.5 shrink-0">
+              <FileText className="h-3.5 w-3.5" />
+              Читабельность
+            </TabsTrigger>
+            <TabsTrigger value="links" className="gap-1.5 shrink-0">
+              <Link className="h-3.5 w-3.5" />
+              Ссылки
             </TabsTrigger>
           </TabsList>
 
@@ -471,6 +487,129 @@ export function AuditDashboard({ onLeadClick }: { onLeadClick?: () => void }) {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Семантическое ядро */}
+          <TabsContent value="semantic" className="mt-4">
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Семантическое ядро</h3>
+                  <Badge variant="outline">{page.semanticCore?.topKeywords.length || 0} ключевых слов</Badge>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-600">{page.semanticCore?.totalWords || 0}</p>
+                    <p className="text-xs text-muted-foreground">Всего слов</p>
+                  </div>
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-600">{page.semanticCore?.uniqueWords || 0}</p>
+                    <p className="text-xs text-muted-foreground">Уникальных</p>
+                  </div>
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-600">{page.semanticCore?.avgWordLength || 0}</p>
+                    <p className="text-xs text-muted-foreground">Средняя длина</p>
+                  </div>
+                </div>
+                {page.semanticCore?.topKeywords && page.semanticCore.topKeywords.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Топ ключевых слов:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {page.semanticCore.topKeywords.map((kw, i) => (
+                        <span key={i} className="rounded-md border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs">
+                          <span className="font-medium">{kw.word}</span>
+                          <span className="ml-1.5 text-muted-foreground">{kw.count}× ({kw.density}%)</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                  → {page.semanticCore?.recommendation || 'Анализ недоступен.'}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Читабельность */}
+          <TabsContent value="readability" className="mt-4">
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Читабельность текста</h3>
+                  <Badge variant="outline" className={cn(
+                    'text-sm',
+                    (page.readability?.score || 0) >= 80 && 'border-emerald-300 text-emerald-700',
+                    (page.readability?.score || 0) >= 50 && (page.readability?.score || 0) < 80 && 'border-amber-300 text-amber-700',
+                    (page.readability?.score || 0) < 50 && 'border-red-300 text-red-700',
+                  )}>
+                    {page.readability?.level || '—'}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-4">
+                  <ScoreRing score={page.readability?.score || 0} size={80} label="Score" />
+                  <div className="flex-1 grid grid-cols-3 gap-3">
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xl font-bold">{page.readability?.avgSentenceLength || 0}</p>
+                      <p className="text-xs text-muted-foreground">Слов/предложение</p>
+                    </div>
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xl font-bold">{page.readability?.avgWordLength || 0}</p>
+                      <p className="text-xs text-muted-foreground">Символов/слово</p>
+                    </div>
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xl font-bold text-red-600">{page.readability?.longSentences || 0}</p>
+                      <p className="text-xs text-muted-foreground">Длинных предложений</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                  → {page.readability?.recommendation || 'Анализ недоступен.'}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Внутренние ссылки */}
+          <TabsContent value="links" className="mt-4">
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Структура внутренних ссылок</h3>
+                  <Badge variant="outline">{page.internalLinkStructure?.totalLinks || 0} ссылок</Badge>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-600">{page.internalLinkStructure?.totalLinks || 0}</p>
+                    <p className="text-xs text-muted-foreground">Всего ссылок</p>
+                  </div>
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-600">{page.internalLinkStructure?.uniqueTargets || 0}</p>
+                    <p className="text-xs text-muted-foreground">Уникальных URL</p>
+                  </div>
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold text-red-600">{page.internalLinkStructure?.nofollowCount || 0}</p>
+                    <p className="text-xs text-muted-foreground">nofollow</p>
+                  </div>
+                </div>
+                {page.internalLinkStructure?.topAnchors && page.internalLinkStructure.topAnchors.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Топ анкоров:</p>
+                    <div className="space-y-1.5">
+                      {page.internalLinkStructure.topAnchors.slice(0, 10).map((a, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-md border px-3 py-1.5 text-sm">
+                          <span className="truncate">{a.text}</span>
+                          <span className="ml-2 shrink-0 text-xs text-muted-foreground">{a.count}×</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                  → {page.internalLinkStructure?.recommendation || 'Анализ недоступен.'}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

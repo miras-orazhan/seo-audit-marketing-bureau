@@ -466,6 +466,171 @@ function assessSecurityHeaders(headers: Headers): { headers: SecurityHeaders; is
 }
 
 // ============================================================
+// Анализ семантического ядра
+// ============================================================
+function analyzeSemanticCore(text: string, totalWords: number) {
+  // Стоп-слова (русские + английские)
+  const stopWords = new Set([
+    'и', 'в', 'на', 'с', 'по', 'для', 'не', 'что', 'это', 'как', 'а', 'то',
+    'of', 'the', 'to', 'a', 'in', 'is', 'it', 'for', 'and', 'on', 'with',
+    'от', 'до', 'при', 'за', 'из', 'у', 'о', 'же', 'бы', 'ли', 'вы', 'мы',
+    'или', 'но', 'так', 'этом', 'когда', 'где', 'если', 'был', 'она', 'он',
+    'они', 'его', 'её', 'их', 'вас', 'нас', 'эти', 'те', 'все', 'всё',
+    'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I',
+    'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
+  ]);
+
+  // Разбиваем на слова (только буквы, минимум 3 символа)
+  const words = text
+    .toLowerCase()
+    .split(/[^a-zа-яё0-9]+/i)
+    .filter(w => w.length >= 3 && !stopWords.has(w) && !/^\d+$/.test(w));
+
+  const wordCount: Record<string, number> = {};
+  for (const w of words) {
+    wordCount[w] = (wordCount[w] || 0) + 1;
+  }
+
+  // Топ-10 ключевых слов
+  const sorted = Object.entries(wordCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([word, count]) => ({
+      word,
+      count,
+      density: totalWords > 0 ? Math.round((count / totalWords) * 1000) / 10 : 0,
+    }));
+
+  const uniqueWords = Object.keys(wordCount).length;
+  const avgWordLength = words.length > 0
+    ? Math.round((words.reduce((s, w) => s + w.length, 0) / words.length) * 10) / 10
+    : 0;
+
+  let recommendation = 'Хорошее семантическое ядро.';
+  if (sorted.length === 0) {
+    recommendation = 'Недостаточно текста для анализа семантики. Добавьте 300+ слов.';
+  } else if (sorted[0].density < 0.5) {
+    recommendation = 'Ключевые слова имеют низкую плотность (<0.5%). Увеличьте релевантность контента.';
+  } else if (sorted[0].density > 5) {
+    recommendation = 'Осторожно: ключевое слово имеет высокую плотность (>5%) — возможен keyword stuffing.';
+  }
+
+  return {
+    topKeywords: sorted,
+    totalWords,
+    uniqueWords,
+    avgWordLength,
+    recommendation,
+  };
+}
+
+// ============================================================
+// Анализ читабельности (readability)
+// ============================================================
+function analyzeReadability(text: string) {
+  // Разбиваем на предложения (по . ! ?)
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const words = text.split(/\s+/).filter(w => w.length > 0);
+
+  const sentenceCount = sentences.length || 1;
+  const wordCount = words.length || 1;
+
+  const avgSentenceLength = Math.round((wordCount / sentenceCount) * 10) / 10;
+  const avgWordLength = Math.round((words.reduce((s, w) => s + w.length, 0) / wordCount) * 10) / 10;
+
+  // Длинные предложения (>20 слов)
+  const longSentences = sentences.filter(s => s.trim().split(/\s+/).length > 20).length;
+
+  // Простая формула: 100 - penalty за длинные предложения и слова
+  let score = 100;
+  score -= (avgSentenceLength - 12) * 3; // идеал ~12 слов/предложение
+  score -= (avgWordLength - 5) * 5; // идеал ~5 символов/слово
+  score -= longSentences * 2;
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  let level = 'Средний';
+  if (score >= 80) level = 'Лёгкий';
+  else if (score < 50) level = 'Сложный';
+
+  let recommendation = 'Текст легко читается.';
+  if (score < 50) {
+    recommendation = 'Текст сложный для чтения. Сократите предложения до 12-15 слов, упростите лексику.';
+  } else if (score < 70) {
+    recommendation = 'Текст средней сложности. Разбейте длинные предложения на короткие.';
+  }
+
+  return {
+    score,
+    avgSentenceLength,
+    avgWordLength,
+    longSentences,
+    level,
+    recommendation,
+  };
+}
+
+// ============================================================
+// Анализ структуры внутренних ссылок
+// ============================================================
+function analyzeInternalLinks(html: string, baseUrl: string) {
+  const baseHost = new URL(baseUrl).hostname;
+  const linkRe = /<a[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  const anchorCounts: Record<string, number> = {};
+  let totalLinks = 0;
+  let uniqueTargets = 0;
+  let nofollowCount = 0;
+  const targets = new Set<string>();
+
+  let m: RegExpExecArray | null;
+  while ((m = linkRe.exec(html)) !== null) {
+    const href = m[1];
+    const anchorText = m[2].replace(/<[^>]+>/g, '').trim();
+
+    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) continue;
+
+    try {
+      const abs = new URL(href, baseUrl);
+      if (abs.hostname !== baseHost) continue; // только внутренние
+
+      totalLinks++;
+      targets.add(abs.pathname);
+
+      if (anchorText) {
+        anchorCounts[anchorText] = (anchorCounts[anchorText] || 0) + 1;
+      }
+
+      // Проверяем rel="nofollow"
+      const fullTag = m[0];
+      if (/rel\s*=\s*["'][^"']*nofollow/i.test(fullTag)) {
+        nofollowCount++;
+      }
+    } catch {}
+  }
+
+  uniqueTargets = targets.size;
+
+  const topAnchors = Object.entries(anchorCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([text, count]) => ({ text, count }));
+
+  let recommendation = 'Хорошая структура внутренних ссылок.';
+  if (totalLinks < 3) {
+    recommendation = 'Мало внутренних ссылок. Добавьте ссылки на связанные страницы для лучшей перелинковки.';
+  } else if (uniqueTargets < totalLinks * 0.5) {
+    recommendation = 'Много дублирующих ссылок на одни и те же страницы. Разнообразьте анкоры.';
+  }
+
+  return {
+    totalLinks,
+    uniqueTargets,
+    topAnchors,
+    nofollowCount,
+    recommendation,
+  };
+}
+
+// ============================================================
 // Главная функция: аудит одной страницы
 // ============================================================
 
@@ -535,6 +700,11 @@ export async function auditPage(targetUrl: string): Promise<PageAudit> {
 
   const viewportMeta = getMeta(html, 'name', 'viewport');
   const isMobileFriendly = !!viewportMeta && (viewportMeta.includes('width=device-width') || viewportMeta.includes('initial-scale'));
+
+  // Новые анализы: семантическое ядро, readability, структура ссылок
+  const semanticCore = analyzeSemanticCore(sample, wordCount);
+  const readability = analyzeReadability(sample);
+  const internalLinkStructure = analyzeInternalLinks(html, finalTarget);
 
   // ============================================================
   // Технические проверки
@@ -747,6 +917,9 @@ export async function auditPage(targetUrl: string): Promise<PageAudit> {
     phones,
     emails,
     urlStructure,
+    semanticCore,
+    readability,
+    internalLinkStructure,
     issues,
   };
 

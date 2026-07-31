@@ -238,8 +238,25 @@ function buildReport(page: PageAudit): { report: AuditReport } {
   // Контентный скор
   const contentScore = page.aiAnalysis?.contentScore ?? 50;
 
-  // Общий: 60% технический + 40% контент
-  const overallScore = Math.round(technicalScore * 0.6 + contentScore * 0.4);
+  // AEO скор (Answer Engine Optimization) — на основе FAQ, schema, readability
+  let aeoScore = 50;
+  if (page.schemas.length > 0) aeoScore += 15;
+  if (page.aiAnalysis?.fixes.some(f => f.type === 'faq_schema')) aeoScore += 15;
+  if (page.readability.score >= 70) aeoScore += 10;
+  if (page.wordCount >= 300) aeoScore += 10;
+  aeoScore = Math.min(100, aeoScore);
+
+  // GEO скор (Generative Engine Optimization) — на основе E-E-A-T сигналов
+  let geoScore = 40;
+  if (page.meta.ogTitle && page.meta.ogDescription && page.meta.ogImage) geoScore += 15;
+  if (page.schemas.some(s => s.type.includes('Organization'))) geoScore += 15;
+  if (page.phones.length > 0) geoScore += 10;
+  if (page.emails.length > 0) geoScore += 10;
+  if (page.httpsRedirect === true) geoScore += 10;
+  geoScore = Math.min(100, geoScore);
+
+  // Общий: 30% тех + 25% контент + 25% AEO + 20% GEO
+  const overallScore = Math.round(technicalScore * 0.30 + contentScore * 0.25 + aeoScore * 0.25 + geoScore * 0.20);
 
   // Roadmap: топ-5 правок (сортировка по impact/effort)
   const effortWeight = { low: 1, medium: 2, high: 3 } as const;
@@ -294,6 +311,8 @@ function buildReport(page: PageAudit): { report: AuditReport } {
     overallScore,
     technicalScore,
     contentScore,
+    aeoScore,
+    geoScore,
     pages: [page],
     topIssues,
     roadmap,

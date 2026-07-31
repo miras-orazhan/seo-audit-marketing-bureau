@@ -90,7 +90,29 @@ export interface PageAudit {
   emails: string[]; // найденные на странице email'ы
   urlStructure: {
     isHumanReadable: boolean;
-    issues: string[]; // например, "URL содержит query-параметры", "URL содержит ID"
+    issues: string[];
+  };
+  semanticCore: {
+    topKeywords: { word: string; count: number; density: number }[];
+    totalWords: number;
+    uniqueWords: number;
+    avgWordLength: number;
+    recommendation: string;
+  };
+  readability: {
+    score: number; // 0-100
+    avgSentenceLength: number;
+    avgWordLength: number;
+    longSentences: number;
+    level: string; // "Лёгкий" / "Средний" / "Сложный"
+    recommendation: string;
+  };
+  internalLinkStructure: {
+    totalLinks: number;
+    uniqueTargets: number;
+    topAnchors: { text: string; count: number }[];
+    nofollowCount: number;
+    recommendation: string;
   };
   issues: TechIssue[];
   aiAnalysis?: AIContentAnalysis;
@@ -125,6 +147,8 @@ export interface AuditReport {
   overallScore: number; // 0–100
   technicalScore: number;
   contentScore: number;
+  aeoScore: number;
+  geoScore: number;
   pages: PageAudit[];
   topIssues: TechIssue[];
   roadmap: RoadmapItem[];

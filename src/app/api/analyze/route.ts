@@ -69,15 +69,42 @@ export async function POST(req: NextRequest) {
 
         try {
           const zai = await ZAI.create();
-          const completion = await zai.chat.completions.create({
-            messages: [
-              { role: 'assistant', content: SYSTEM_PROMPT },
-              { role: 'user', content: JSON.stringify(contextForAI) },
-            ],
-            thinking: { type: 'disabled' },
-          });
 
-          const rawContent = completion.choices[0]?.message?.content || '';
+          // AI вызов с retry логикой: турбо всегда, retry при 429/timeout до 3 раз с задержкой 4 сек
+          let rawContent = '';
+          let lastError: Error | null = null;
+          const maxRetries = 3;
+
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              const completion = await zai.chat.completions.create({
+                messages: [
+                  { role: 'assistant', content: SYSTEM_PROMPT },
+                  { role: 'user', content: JSON.stringify(contextForAI) },
+                ],
+                thinking: { type: 'disabled' },
+              });
+              rawContent = completion.choices[0]?.message?.content || '';
+              if (rawContent) break; // успех — выходим из retry цикла
+            } catch (aiErr) {
+              lastError = aiErr instanceof Error ? aiErr : new Error(String(aiErr));
+              const errStr = lastError.message.toLowerCase();
+              const isRetryable = errStr.includes('429') || errStr.includes('rate limit') || errStr.includes('timeout') || errStr.includes('econnreset');
+
+              if (isRetryable && attempt < maxRetries) {
+                // Ждём 4 сек и повторяем
+                send('heartbeat', { t: Date.now(), retry: attempt });
+                await new Promise(r => setTimeout(r, 4000));
+                continue;
+              }
+              // Если не retryable или попытки кончились — пробрасываем
+              throw lastError;
+            }
+          }
+
+          if (!rawContent) {
+            throw new Error(lastError?.message || 'AI вернул пустой ответ после всех попыток');
+          }
 
           // AI иногда возвращает невалидный JSON: trailing commas, unquoted keys,
           // markdown-обёртки. Делаем несколько попыток распарсить, потом fallback.
