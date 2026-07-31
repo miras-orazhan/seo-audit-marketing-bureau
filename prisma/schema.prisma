@@ -19,6 +19,8 @@ model Audit {
   overallScore   Int
   technicalScore Int
   contentScore   Int
+  aeoScore       Int      @default(0)
+  geoScore       Int      @default(0)
   criticalCount  Int      @default(0)
   warningCount   Int      @default(0)
   topIssue       String?
@@ -44,27 +46,77 @@ model Lead {
   email     String?
   site      String?
   message   String?
-  // Связь с аудитом (если заявка после аудита)
   auditId   String?
   audit     Audit?   @relation(fields: [auditId], references: [id], onDelete: SetNull)
-  // Источник
-  source    String   @default("website") // website | dashboard | chat
+  source    String   @default("website")
+  status    String   @default("new") // new | contacted | closed
   ipHash    String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@index([phone])
+  @@index([status])
 }
 
 // ============================================================
-// Чат-сессии (история сообщений)
+// Чат-сессии
 // ============================================================
 model ChatSession {
   id        String   @id @default(cuid())
   auditId   String?
-  messages  Json     // массив {role, content, timestamp}
+  messages  Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([auditId])
+}
+
+// ============================================================
+// Услуги (динамические — из БД)
+// ============================================================
+model Service {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  icon        String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+}
+
+// ============================================================
+// FAQ (динамические — из БД)
+// ============================================================
+model FaqItem {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
+
+// ============================================================
+// Настройки сайта (контакты, статы, тексты)
+// ============================================================
+model SiteSetting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}
+
+// ============================================================
+// Админ-пользователи
+// ============================================================
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useSeoStore } from '@/lib/seo-store';
 import { HeroForm, ScanProgress } from '@/components/seo/hero-form';
 import { AuditDashboard } from '@/components/seo/audit-dashboard';
@@ -10,9 +10,30 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Phone, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+interface ServiceItem { title: string; description: string }
+interface FaqItem { q: string; a: string }
+interface SiteSettings { [key: string]: string }
+interface StatsData { auditsTotal: number; leadsTotal: number; uniqueSitesAnalyzed: number }
+
 export default function Home() {
   const { report, isScanning, progress } = useSeoStore();
   const leadRef = useRef<HTMLDivElement>(null);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [settings, setSettings] = useState<SiteSettings>({});
+  const [stats, setStats] = useState<StatsData>({ auditsTotal: 0, leadsTotal: 0, uniqueSitesAnalyzed: 0 });
+
+  // Загружаем динамический контент при монтировании
+  useEffect(() => {
+    fetch('/api/content').then(r => r.json()).then(data => {
+      if (data.services) setServices(data.services);
+      if (data.faqs) setFaqs(data.faqs);
+      if (data.settings) setSettings(data.settings);
+    }).catch(() => {});
+    fetch('/api/stats').then(r => r.json()).then(data => {
+      if (data.auditsTotal !== undefined) setStats(data);
+    }).catch(() => {});
+  }, []);
 
   const showHero = !report && !isScanning;
   const showProgress = isScanning || progress.stage === 'error';
@@ -69,12 +90,12 @@ export default function Home() {
         {showHero && (
           <>
             <HeroForm onLeadClick={scrollToLead} />
-            <StatsBar />
+            <StatsBar settings={settings} stats={stats} />
             <FeaturesSection />
             <HowItWorksSection />
-            <ServicesSection onLeadClick={scrollToLead} />
-            <CasesSection onLeadClick={scrollToLead} />
-            <FaqSection />
+            <ServicesSection services={services} onLeadClick={scrollToLead} />
+            <AuditCounter stats={stats} />
+            <FaqSection faqs={faqs} />
           </>
         )}
         {showProgress && <ScanProgress />}
@@ -148,29 +169,27 @@ export default function Home() {
 // Секции лендинга — минималистичный чёрно-золотой стиль
 // ============================================================
 
-function StatsBar() {
-  const stats = [
-    { value: '200+', label: 'проектов с 2017 года' },
-    { value: '9 лет', label: 'на рынке Казахстана' },
-    { value: 'Топ-10', label: 'Google в среднем за 4 мес' },
-    { value: 'x3.2', label: 'средний рост трафика' },
+function StatsBar({ settings, stats }: { settings: SiteSettings; stats: StatsData }) {
+  const items = [
+    { value: settings.projectsCount || '200+', label: 'проектов с ' + (settings.foundingYear || '2017') },
+    { value: (settings.yearsExperience || '9') + ' лет', label: 'на рынке Казахстана' },
+    { value: 'Топ-10', label: 'Google за ' + (settings.avgTimeToTop || '4') + ' мес' },
+    { value: settings.trafficGrowth || 'x3.2', label: 'средний рост трафика' },
   ];
   return (
     <section className="border-y border-neutral-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-          {stats.map((s, i) => (
+          {items.map((s, i) => (
             <motion.div
-              key={s.label}
+              key={i}
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.08 }}
               className="border-l-2 border-amber-500 pl-4"
             >
-              <p className="font-display text-3xl font-extrabold tracking-tight text-neutral-900">
-                {s.value}
-              </p>
+              <p className="font-display text-3xl font-extrabold tracking-tight text-neutral-900">{s.value}</p>
               <p className="mt-0.5 text-xs text-neutral-600">{s.label}</p>
             </motion.div>
           ))}
@@ -297,15 +316,16 @@ function HowItWorksSection() {
   );
 }
 
-function ServicesSection({ onLeadClick }: { onLeadClick?: () => void }) {
-  const services = [
-    { title: 'SEO-продвижение', text: 'Выводим в топ-10 Google и Яндекс. Технический аудит, семантика, контент, линкбилдинг.' },
-    { title: 'Контекстная реклама', text: 'Google Ads и Яндекс.Директ. Настройка, ведение, оптимизация ROI под ваш бюджет.' },
-    { title: 'SMM и таргет', text: 'Instagram, Facebook, TikTok. Контент-стратегия, таргетинг, community management.' },
-    { title: 'Веб-разработка', text: 'Сайты на Tilda, Webflow, Next.js. Интернет-магазины, лендинги, корпоративные порталы.' },
-    { title: 'Веб-аналитика', text: 'Google Analytics 4, GTM, сквозная аналитика. Настройка целей, дашборды, отчёты.' },
-    { title: 'Полный SEO-аудит', text: 'Глубокий технический и контентный разбор сайта с отчётом на 40+ страниц и планом правок.' },
+function ServicesSection({ services, onLeadClick }: { services: ServiceItem[]; onLeadClick?: () => void }) {
+  const fallback = [
+    { title: 'SEO-продвижение', description: 'Выводим в топ-10 Google и Яндекс.' },
+    { title: 'Контекстная реклама', description: 'Google Ads и Яндекс.Директ.' },
+    { title: 'SMM и таргет', description: 'Instagram, Facebook, TikTok.' },
+    { title: 'Веб-разработка', description: 'Сайты на Tilda, Webflow, Next.js.' },
+    { title: 'Веб-аналитика', description: 'Google Analytics 4, GTM.' },
+    { title: 'Полный SEO-аудит', description: 'Глубокий разбор с планом правок.' },
   ];
+  const items = services.length > 0 ? services : fallback;
   return (
     <section id="services" className="py-14 sm:py-20 bg-neutral-50">
       <div className="mx-auto max-w-7xl px-4">
@@ -322,7 +342,7 @@ function ServicesSection({ onLeadClick }: { onLeadClick?: () => void }) {
         </div>
 
         <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((s, i) => (
+          {items.map((s, i) => (
             <motion.div
               key={s.title}
               initial={{ opacity: 0, y: 16 }}
@@ -334,7 +354,7 @@ function ServicesSection({ onLeadClick }: { onLeadClick?: () => void }) {
               <div className="flex items-baseline justify-between">
                 <h3 className="text-base font-bold">{s.title}</h3>
               </div>
-              <p className="mt-2 flex-1 text-sm text-neutral-600">{s.text}</p>
+              <p className="mt-2 flex-1 text-sm text-neutral-600">{s.description}</p>
               <div className="mt-4 flex items-center justify-end border-t border-neutral-100 pt-3">
                 <button
                   onClick={onLeadClick}
@@ -351,118 +371,39 @@ function ServicesSection({ onLeadClick }: { onLeadClick?: () => void }) {
   );
 }
 
-function CasesSection({ onLeadClick }: { onLeadClick?: () => void }) {
-  const cases = [
-    {
-      tag: 'Ритейл',
-      title: 'Комиссионный магазин Tehno Altyn',
-      desc: 'Снижение стоимости Лида в 2 раза. Бюджет: NDA.',
-      metrics: [
-        { value: 'X2', label: 'увеличение Лидов' },
-        { value: '+50%', label: 'увеличение продаж online' },
-      ],
-    },
-    {
-      tag: 'Банки',
-      title: 'Jusan Bank / Jusan Business',
-      desc: 'Продвижение мобильного приложения: 5,8 млн просмотров. CPI $0,43. Бюджет: NDA.',
-      metrics: [
-        { value: '+449,67%', label: 'рост ключевых бизнес-конверсий (YoY)' },
-        { value: 'X2,7', label: 'рост вовлеченности пользователей' },
-      ],
-    },
-    {
-      tag: 'Услуги',
-      title: 'Визовый центр Visa Support',
-      desc: 'Бюджет: $9 800. Запуск лидогенерации через Telegram-канал.',
-      metrics: [
-        { value: '~3 260', label: 'кол-во заявок' },
-        { value: '+1 325', label: 'подписчиков в Telegram' },
-        { value: '~$1,15', label: 'средний CPA' },
-      ],
-    },
-    {
-      tag: 'Рестораны',
-      title: 'NINO RESTAURANT',
-      desc: 'Бюджет: >18 000 $. Привлечение новых гостей через таргетированную рекламу.',
-      metrics: [
-        { value: '+10 500', label: 'новых гостей' },
-      ],
-    },
-    {
-      tag: 'Недвижимость',
-      title: 'ЖК Mone / ЖК Тарту',
-      desc: 'Внедрили CRM и чат-бота в отдел продаж. Бюджет: NDA.',
-      metrics: [
-        { value: '200+', label: 'квартир продано в ЖК комфорт-класса' },
-        { value: '0,87 $', label: 'средний CPL' },
-      ],
-    },
-    {
-      tag: 'Ивенты',
-      title: 'Nikos Band',
-      desc: 'Впервые в Казахстане. Продажа билетов через онлайн-рекламу.',
-      metrics: [
-        { value: '>200', label: 'продано билетов' },
-        { value: '30 000 ₸', label: 'средняя стоимость билета' },
-      ],
-    },
+function AuditCounter({ stats }: { stats: StatsData }) {
+  const items = [
+    { value: String(stats.auditsTotal || 0), label: 'аудитов проведено' },
+    { value: String(stats.uniqueSitesAnalyzed || 0), label: 'уникальных сайтов проверено' },
+    { value: String(stats.leadsTotal || 0), label: 'заявок получено' },
   ];
   return (
-    <section id="cases" className="border-y border-neutral-200 bg-white py-14 sm:py-20">
+    <section id="stats" className="border-y border-neutral-200 bg-white py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">Кейсы</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">Статистика</p>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Результаты клиентов
+            Живые цифры — обновляются в реальном времени
           </h2>
           <p className="mt-4 text-base text-neutral-600 sm:text-lg">
-            Реальные проекты Marketing Bureau с 2017 года
+            Каждый аудит и заявка автоматически попадают в базу данных
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {cases.map((c, i) => (
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-3">
+          {items.map((s, i) => (
             <motion.div
-              key={c.title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              key={i}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.06 }}
-              className="flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white"
+              transition={{ duration: 0.4, delay: i * 0.1 }}
+              className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 p-8"
             >
-              <div className="bg-amber-500 p-4 text-white">
-                <span className="inline-block border border-white/40 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                  {c.tag}
-                </span>
-                <h3 className="mt-2 font-display text-base font-bold leading-tight">{c.title}</h3>
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <p className="text-sm text-neutral-600">{c.desc}</p>
-                <div className="mt-4 grid gap-3 border-t border-neutral-100 pt-4">
-                  {c.metrics.map((m, idx) => (
-                    <div key={idx} className="flex items-baseline gap-3">
-                      <span className="font-display text-xl font-extrabold text-amber-600 shrink-0">
-                        {m.value}
-                      </span>
-                      <span className="text-xs text-neutral-600">{m.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <span className="font-display text-5xl font-extrabold text-amber-600">{s.value}</span>
+              <span className="mt-2 text-sm text-neutral-600">{s.label}</span>
             </motion.div>
           ))}
-        </div>
-
-        <div className="mt-10 text-center">
-          <Button
-            size="lg"
-            onClick={onLeadClick}
-            className="bg-neutral-900 text-white hover:bg-neutral-800"
-          >
-            Обсудить ваш проект
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
         </div>
       </div>
     </section>
@@ -474,42 +415,12 @@ function CasesSection({ onLeadClick }: { onLeadClick?: () => void }) {
 // (AI-системы цитируют ответы напрямую). Соответствует FAQPage
 // schema.org, подключённой в StructuredData.
 // ============================================================
-function FaqSection() {
-  const faqs = [
-    {
-      q: 'Что такое SEO-аудит сайта и зачем он нужен?',
-      a: 'SEO-аудит — технический и контентный анализ сайта для выявления проблем, мешающих ранжированию в Google и Яндекс. Включает проверку мета-тегов, заголовков, canonical, schema.org, скорости, мобильной адаптивности и соответствия контента поисковому интенту.',
-    },
-    {
-      q: 'Сколько стоит SEO-аудит сайта?',
-      a: 'Базовый AI SEO-аудит на сайте Marketing Bureau — бесплатный и не требует регистрации. Полный ручной SEO-аудит с отчётом на 40+ страниц и планом правок стоит от 90 000 тенге. Стоимость SEO-продвижения под ключ — от 150 000 тенге в месяц и зависит от ниши, региона и конкуренции.',
-    },
-    {
-      q: 'Как работает AI SEO-аудит?',
-      a: 'AI-аудит: краулер проверяет 17+ технических параметров, AI анализирует контент и интент, генерирует правки (title, description, H2/H3, FAQ-schema). Алгоритм считает скор 0–100 и строит roadmap из топ-5 правок. Отчёт готов за 30 секунд.',
-    },
-    {
-      q: 'Что такое GEO и AEO оптимизация?',
-      a: 'GEO и AEO — оптимизация для AI-поиска (Google AI Overviews, ChatGPT, Perplexity). В отличие от SEO, GEO фокусируется на структурированных данных, чётких ответах и фактах. Цель — чтобы AI цитировал ваш контент.',
-    },
-    {
-      q: 'Сколько времени занимает SEO-продвижение?',
-      a: 'Первые результаты — через 2–3 месяца. Топ-10 Google — через 4–6 месяцев. Стабильный трафик — через 6–12 месяцев. Marketing Bureau с 2017 года выводит сайты в топ-10 Google за 4 месяца в среднем.',
-    },
-    {
-      q: 'Чем SEO отличается от контекстной рекламы?',
-      a: 'SEO — органическая выдача: не платите за клики, результат сохраняется. Контекстная реклама (Google Ads, Яндекс.Директ) — платные объявления: мгновенный результат, исчезает без бюджета. Комбинируйте: реклама для старта, SEO для потока.',
-    },
-    {
-      q: 'Какие услуги предоставляет Marketing Bureau?',
-      a: 'Marketing Bureau — агентство полного цикла с 2017 года. Услуги: SEO, контекстная реклама (Google Ads, Яндекс.Директ), SMM (Instagram, TikTok), веб-разработка, аналитика (GA4, GTM). 200+ проектов, топ-10 Google за 4 месяца.',
-    },
-    {
-      q: 'В каких регионах работает Marketing Bureau?',
-      a: 'Marketing Bureau работает по всему Казахстану (Алматы, Астана, Шымкент, Караганда, Актобе и другие города) и странам СНГ. Основной офис — в Алматы. Связаться можно по телефону +7 (775) 636 78 32 или email marketingbureau.kz@gmail.com. Консультация — бесплатная.',
-    },
+function FaqSection({ faqs }: { faqs: FaqItem[] }) {
+  const fallback: FaqItem[] = [
+    { q: 'Что такое SEO-аудит?', a: 'Технический и контентный анализ сайта для выявления проблем ранжирования.' },
+    { q: 'Сколько стоит?', a: 'AI-аудит бесплатный. Полный аудит — от 90 000 ₸.' },
   ];
-
+  const items = faqs.length > 0 ? faqs : fallback;
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
   return (
@@ -526,7 +437,7 @@ function FaqSection() {
         </div>
 
         <div className="mt-10 space-y-3">
-          {faqs.map((faq, idx) => (
+          {items.map((faq, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 8 }}
