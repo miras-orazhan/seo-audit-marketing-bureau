@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 const RATE_LIMIT = { routeId: 'analyze', max: 5, windowMs: 60_000 };
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-oss-20b:free';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'nvidia/nemotron-nano-9b-v2:free';
 
 const SYSTEM_PROMPT = `Ты SEO-аналитик. Объясняй простым языком, без жаргона. Верни ТОЛЬКО валидный JSON. Без markdown, без \`\`\`. Схема:
 {"intent":{"detected":"простыми словами для чего эта страница","matchScore":0,"gaps":["что не хватает"]},"contentScore":0,"summary":"1-2 предложения","fixes":[{"type":"title","title":"название","after":"готовый текст","rationale":"почему важно","impact":0,"effort":"low"}]}

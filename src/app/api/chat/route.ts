@@ -7,7 +7,7 @@ export const maxDuration = 30;
 const RATE_LIMIT = { routeId: 'chat', max: 20, windowMs: 60_000 };
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-oss-20b:free';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'nvidia/nemotron-nano-9b-v2:free';
 
 const SYSTEM_PROMPT = `Ты — встроенный SEO-ассистент. Отвечай на русском, кратко и по делу. Без SEO-жаргона.`;
 
