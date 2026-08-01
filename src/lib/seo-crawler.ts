@@ -451,16 +451,16 @@ function assessSecurityHeaders(headers: Headers): { headers: SecurityHeaders; is
   };
   const issues: TechIssue[] = [];
   if (!securityHeaders['strict-transport-security']) {
-    issues.push(issue('security', 'warning', 'Missing HSTS header', 'Strict-Transport-Security не установлен — сайт уязвим к SSL-стриппингу.', 'Добавьте Strict-Transport-Security: max-age=31536000; includeSubDomains', 30, 'low'));
+    issues.push(issue('security', 'warning', 'Сайт открывается по небезопасному HTTP', 'Ваш сайт можно открыть через http:// вместо https://. Это небезопасно — данные могут перехватить.', 'Настройте автоматический редирект с http:// на https:// в настройках хостинга. Если сайт на Vercel — это делается автоматически.', 30, 'low'));
   }
   if (!securityHeaders['content-security-policy']) {
-    issues.push(issue('security', 'info', 'Missing Content-Security-Policy', 'CSP не настроен — повышенный риск XSS.', 'Определите минимальный CSP, разрешающий только нужные домены.', 20, 'medium'));
+    issues.push(issue('security', 'info', 'Нет защиты от вредоносных скриптов (CSP)', 'На сайт можно загрузить сторонние скрипты. Для обычного сайта это не критично, но для интернет-магазинов — желательно.', 'Добавьте Content-Security-Policy заголовок через настройки хостинга. Не обязательно для визиток и блогов.', 20, 'medium'));
   }
   if (!securityHeaders['x-frame-options'] && !securityHeaders['permissions-policy']?.includes('frame')) {
-    issues.push(issue('security', 'info', 'Missing X-Frame-Options', 'Без X-Frame-Options страницу можно встроить в iframe (clickjacking).', 'Установите X-Frame-Options: SAMEORIGIN или используйте permissions-policy.', 15, 'low'));
+    issues.push(issue('security', 'info', 'Сайт можно встроить в чужую страницу', 'Другие сайты могут показать вашу страницу в рамке (iframe). Это редко проблема, но может использоваться для обмана.', 'Добавьте заголовок X-Frame-Options: SAMEORIGIN в настройках хостинга. Не критично для большинства сайтов.', 15, 'low'));
   }
   if (!securityHeaders['x-content-type-options']) {
-    issues.push(issue('security', 'info', 'Missing X-Content-Type-Options', 'Без X-Content-Type-Options: nosniff браузер может MIME-сниффить.', 'Установите X-Content-Type-Options: nosniff', 10, 'low'));
+    issues.push(issue('security', 'info', 'Браузер может неправильно определить тип файлов', 'Мелкая техническая деталь — браузер может подумать, что картинка это скрипт. Практически не влияет на SEO.', 'Добавьте заголовок X-Content-Type-Options: nosniff. Это настройка хостинга, не требует изменений в коде.', 10, 'low'));
   }
   return { headers: securityHeaders, issues };
 }
@@ -713,116 +713,116 @@ export async function auditPage(targetUrl: string): Promise<PageAudit> {
 
   // 1. Статус
   if (res.status >= 400) {
-    issues.push(issue('status', 'critical', `Сервер вернул ${res.status}`, `HTTP ${res.status} — страница недоступна для пользователей и поисковиков.`, 'Верните 200 OK, исправьте серверную ошибку или настройте корректный 301 на рабочую страницу.', 100, 'medium'));
+    issues.push(issue('status', 'critical', '⚠️ САЙТ НЕ ОТКРЫВАЕТСЯ', `Сервер вернул ошибку ${res.status}. Люди и Google видят страницу с ошибкой вместо вашего сайта.`, 'Срочно обратитесь к разработчику или в техподдержку хостинга. Сайт должен открываться без ошибок.', 100, 'medium'));
   } else if (res.status >= 300) {
-    issues.push(issue('status', 'warning', `Редирект ${res.status}`, `Страница отдаёт ${res.status} — теряется вес при индексации.`, 'Используйте 301 вместо 302/307 для постоянных редиректов.', 40, 'low'));
+    issues.push(issue('status', 'warning', 'Неправильный тип редиректа', `Сайт использует временный редирект ${res.status} вместо постоянного (301). Google может не передать SEO-вес на новый адрес.`, 'Попросите разработчика заменить редирект на 301 (постоянный). Это одна строчка в настройках сервера.', 40, 'low'));
   } else {
-    issues.push(issue('status', 'ok', `Статус ${res.status} OK`, 'Страница корректно отдаётся.', '', 0, 'low'));
+    issues.push(issue('status', 'ok', '✅ Сайт открывается без ошибок', 'Страница загружается нормально.', '', 0, 'low'));
   }
 
   // 2. Редирект-цепочка
   if (redirectChain.length > 2) {
-    issues.push(issue('status', 'warning', `Длинная редирект-цепочка (${redirectChain.length - 1} шага)`, `Цепочка: ${redirectChain.join(' → ')}`, 'Сократите цепочку до одного 301-редиректа.', 25, 'low'));
+    issues.push(issue('status', 'warning', 'Слишком много перенаправлений', `Сайт делает ${redirectChain.length - 1} перенаправления подряд: ${redirectChain.join(' → ')}. Каждое лишнее перенаправление замедляет загрузку.`, 'Попросите разработчика настроить прямое перенаправление — с первого адреса сразу на итоговый, без промежуточных шагов.', 25, 'low'));
   }
 
   // 3. Title
   if (!meta.title) {
-    issues.push(issue('meta', 'critical', 'Отсутствует <title>', 'Title не задан — поисковики не поймут, о чём страница.', 'Добавьте уникальный title 50–60 символов с целевым ключом в начале.', 90, 'low'));
+    issues.push(issue('meta', 'critical', '🔴 Нет заголовка страницы (title)', 'У страницы нет title — это текст, который виден во вкладке браузера и в результатах поиска Google. Без него Google не понимает, о чём ваша страница.', 'Добавьте заголовок страницы в настройках вашей CMS (WordPress, Tilda, и т.д.). Длина: 50-60 символов. Пример: «Медицинские услуги в Алматы — Эмир Мед».', 90, 'low'));
   } else if (meta.titleLength < 30) {
-    issues.push(issue('meta', 'warning', `Слишком короткий title (${meta.titleLength} симв.)`, `Текущий: "${meta.title}"`, 'Расширьте до 50–60 символов, добавьте уточняющие слова и бренд.', 50, 'low'));
+    issues.push(issue('meta', 'warning', `Заголовок страницы слишком короткий (${meta.titleLength} симв.)`, `Сейчас: «${meta.title}». Google показывает 50-60 символов в поиске. Короткий заголовок не использует всё доступное место.`, 'Расширьте заголовок до 50-60 символов. Добавьте название компании и что вы предлагаете. Пример: «Эмир Мед — медицинские услуги в Алматы и Астане».', 50, 'low'));
   } else if (meta.titleLength > 65) {
-    issues.push(issue('meta', 'warning', `Слишком длинный title (${meta.titleLength} симв.)`, `Текущий: "${meta.title}"`, 'Сократите до 60 символов, иначе поисковики обрежут.', 40, 'low'));
+    issues.push(issue('meta', 'warning', `Заголовок страницы слишком длинный (${meta.titleLength} симв.)`, `Сейчас: «${meta.title}». Google обрезает заголовки длиннее 60 символов — люди увидят только половину.`, 'Сократите заголовок до 50-60 символов. Уберите лишние слова, оставьте главное: что предлагаете + название компании.', 40, 'low'));
   } else {
-    issues.push(issue('meta', 'ok', 'Title оптимальной длины', `${meta.titleLength} симв. — в пределах 50–65.`, '', 0, 'low'));
+    issues.push(issue('meta', 'ok', '✅ Заголовок страницы правильной длины', `${meta.titleLength} симв. — Google покажет его полностью в результатах поиска.`, '', 0, 'low'));
   }
 
   // 4. Description
   if (!meta.description) {
-    issues.push(issue('meta', 'critical', 'Отсутствует meta description', 'Без description поисковики сами генерируют сниппет, часто неудачно.', 'Напишите description 140–160 символов с целевым ключом и CTA.', 70, 'low'));
+    issues.push(issue('meta', 'critical', '🔴 Нет описания страницы (description)', 'Описание страницы — это текст, который люди видят под ссылкой в Google. Без него Google берёт случайный кусок текста с страницы, который может быть непонятным.', 'Добавьте описание в настройках CMS. Длина: 140-160 символов. Пример: «Медицинский центр Эмир Мед в Алмате. Полный спектр услуг: терапия, хирургия, диагностика. Запишитесь на приём.»', 70, 'low'));
   } else if (meta.descriptionLength < 120) {
-    issues.push(issue('meta', 'warning', `Короткое description (${meta.descriptionLength} симв.)`, `Текущий: "${meta.description}"`, 'Расширьте до 150–160 символов для более информативного сниппета.', 35, 'low'));
+    issues.push(issue('meta', 'warning', `Описание страницы слишком короткое (${meta.descriptionLength} симв.)`, `Сейчас: «${meta.description}». Короткое описание не использует всё место в Google — можно добавить больше полезной информации.`, 'Расширьте описание до 140-160 символов. Добавьте призыв к действию: «Запишитесь на приём» или «Смотрите цены».', 35, 'low'));
   } else if (meta.descriptionLength > 170) {
-    issues.push(issue('meta', 'warning', `Длинное description (${meta.descriptionLength} симв.)`, `Текущий: "${meta.description}"`, 'Сократите до 160 символов, чтобы не обрезалось в выдаче.', 25, 'low'));
+    issues.push(issue('meta', 'warning', `Описание страницы слишком длинное (${meta.descriptionLength} симв.)`, `Сейчас: «${meta.description}». Google обрежет описание длиннее 160 символов — люди увидят неполный текст.`, 'Сократите до 150-160 символов. Уберите лишние слова, оставьте главное.', 25, 'low'));
   } else {
-    issues.push(issue('meta', 'ok', 'Description оптимальной длины', `${meta.descriptionLength} симв. — в пределах 140–170.`, '', 0, 'low'));
+    issues.push(issue('meta', 'ok', '✅ Описание страницы правильной длины', `${meta.descriptionLength} симв. — Google покажет его полностью.`, '', 0, 'low'));
   }
 
   // 5. Canonical
   if (!meta.canonical) {
-    issues.push(issue('canonical', 'warning', 'Отсутствует canonical', 'Без canonical возможны проблемы с дубликатами при разных URL-параметрах.', 'Добавьте <link rel="canonical" href="..."> на каноническую версию.', 45, 'low'));
+    issues.push(issue('canonical', 'warning', 'Не указана главная версия страницы (canonical)', 'Если страница доступна по разным адресам (с www и без, с параметрами), Google может считать их дублями. Canonical говорит «вот главная версия».', 'Попросите разработчика добавить тег <link rel="canonical" href="главный-адрес"> в <head> страницы. Большинство CMS делают это автоматически — проверьте настройки.', 45, 'low'));
   } else {
     try {
       const canonUrl = new URL(meta.canonical, finalTarget).toString();
       if (canonUrl !== finalUrl && canonUrl !== finalTarget) {
-        issues.push(issue('canonical', 'info', 'Canonical указывает на другой URL', `canonical: ${canonUrl}, страница: ${finalUrl}`, 'Убедитесь, что canonical корректно указывает на индексируемую версию.', 20, 'low'));
+        issues.push(issue('canonical', 'info', 'Canonical указывает на другой адрес', `Главный адрес: ${canonUrl}, а открыли: ${finalUrl}. Это не обязательно ошибка — но проверьте, что правильно.`, 'Проверьте в CMS, что canonical указывает на правильный адрес страницы.', 20, 'low'));
       } else {
-        issues.push(issue('canonical', 'ok', 'Canonical задан корректно', meta.canonical, '', 0, 'low'));
+        issues.push(issue('canonical', 'ok', '✅ Canonical настроен правильно', meta.canonical, '', 0, 'low'));
       }
     } catch {
-      issues.push(issue('canonical', 'warning', 'Некорректный canonical URL', meta.canonical, 'Исправьте URL в canonical.', 30, 'low'));
+      issues.push(issue('canonical', 'warning', 'Адрес в canonical некорректный', `В canonical указан нерабочий адрес: ${meta.canonical}. Google не сможет его открыть.`, 'Проверьте адрес в canonical — он должен быть рабочим и начинаться с https://', 30, 'low'));
     }
   }
 
   // 6. H1
   const h1Count = headings.filter((h) => h.level === 1).length;
   if (h1Count === 0) {
-    issues.push(issue('meta', 'critical', 'Отсутствует H1', 'H1 — главный заголовок страницы, без него поисковикам сложнее понять тему.', 'Добавьте ровно один H1 с целевым ключевым запросом.', 65, 'low'));
+    issues.push(issue('meta', 'critical', '🔴 Нет главного заголовка (H1)', 'H1 — это самый крупный заголовок на странице. Он говорит Google и посетителям, о чём эта страница. Без него непонятно, что вы предлагаете.', 'Добавьте один заголовок H1 в начало страницы. Пример: «Медицинские услуги в Алмате» или «Центр здоровья Эмир Мед». В Tilda/WordPress — выберите стиль «Заголовок 1».', 65, 'low'));
   } else if (h1Count > 1) {
-    issues.push(issue('meta', 'warning', `Несколько H1 (${h1Count} шт.)`, 'Несколько H1 размывают семантическую структуру.', 'Оставьте один H1, остальные сделайте H2.', 35, 'low'));
+    issues.push(issue('meta', 'warning', `Слишком много главных заголовков (${h1Count} шт.)`, 'На странице несколько заголовков H1. Google путается — не понимает, какой из них главный.`, 'Оставьте один заголовок H1 (самый важный). Остальные крупные заголовки сделайте H2 или H3. Это настройка стиля в вашей CMS.', 35, 'low'));
   } else {
-    issues.push(issue('meta', 'ok', 'H1 присутствует (1 шт.)', headings.find((h) => h.level === 1)?.text || '', '', 0, 'low'));
+    issues.push(issue('meta', 'ok', '✅ Главный заголовок (H1) на месте', `«${headings.find((h) => h.level === 1)?.text || ''}»`, '', 0, 'low'));
   }
 
   // 7. Структура заголовков
   const h2Count = headings.filter((h) => h.level === 2).length;
   if (h2Count === 0 && wordCount > 300) {
-    issues.push(issue('meta', 'warning', 'Нет H2 подзаголовков', 'Длинный текст без подзаголовков хуже читается и индексируется.', 'Разбейте текст на блоки с H2/H3.', 40, 'medium'));
+    issues.push(issue('meta', 'warning', 'Текст без подзаголовков', 'На странице нет подзаголовков (H2, H3). Длинный текст без структуры трудно читать — люди уходят. Google тоже любит структурированный контент.', 'Разбейте текст на блоки и добавьте подзаголовки. Примеры: «Наши услуги», «Цены», «Отзывы», «Как записаться». Используйте стиль «Заголовок 2» в CMS.', 40, 'medium'));
   }
 
   // 8. Объём контента
   if (wordCount < 300) {
-    issues.push(issue('meta', 'warning', `Мало контента (${wordCount} слов)`, 'Страницы с <300 слов редко ранжируются в топе.', 'Расширьте контент до 600–1500 слов с учётом интента.', 55, 'high'));
+    issues.push(issue('meta', 'warning', `Мало текста на странице (${wordCount} слов)`, 'Google любит страницы с полезным текстом. ${wordCount} слов — это мало. Страницы с 600+ слов чаще попадают в топ поиска.', 'Добавьте больше текста: описание услуг, цены, отзывы, FAQ. Пишите для людей, не для поисковиков. Цель: 600-1500 слов.', 55, 'high'));
   } else if (wordCount > 50) {
-    issues.push(issue('meta', 'ok', `Достаточно контента (${wordCount} слов)`, 'Объём контента в норме.', '', 0, 'low'));
+    issues.push(issue('meta', 'ok', `✅ Достаточно текста (${wordCount} слов)`, 'На странице достаточно полезного контента.', '', 0, 'low'));
   }
 
   // 9. Изображения без alt
   const imagesNoAlt = images.filter((img) => !img.alt).length;
   if (imagesNoAlt > 0) {
-    issues.push(issue('meta', 'warning', `${imagesNoAlt} изображений без alt`, 'Alt важен для доступности и image-search.', 'Пропишите alt для всех содержательных изображений.', 30, 'low'));
+    issues.push(issue('meta', 'warning', `${imagesNoAlt} картинок без описания (alt)`, 'У картинок на странице нет текстового описания. Google не видит картинки — он читает alt. Без alt картинки не появляются в поиске по картинкам.', 'Добавьте описание к каждой картинке в CMS. Пример: «Приём врача-терапевта в клинике Эмир Мед». Не пишите alt для декоративных элементов (фоны, иконки).', 30, 'low'));
   }
 
   // 10. robots.txt
   if (!robotsFound) {
-    issues.push(issue('robots', 'warning', 'robots.txt не найден', 'Без robots.txt поисковики не получают инструкций по краулингу.', 'Создайте /robots.txt, даже пустой — он показывает, что краулинг разрешён.', 40, 'low'));
+    issues.push(issue('robots', 'warning', 'Нет файла robots.txt', 'robots.txt — это файл, который говорит Google, какие страницы сайта можно сканировать. Без него Google всё равно сканирует сайт, но медленнее.', 'Создайте файл robots.txt в корне сайта. Простейшее содержание: «User-agent: *\nAllow: /». Большинство CMS создают его автоматически — проверьте настройки.', 40, 'low'));
   } else {
-    issues.push(issue('robots', 'ok', 'robots.txt найден', 'Файл доступен.', '', 0, 'low'));
+    issues.push(issue('robots', 'ok', '✅ robots.txt на месте', 'Google получает инструкции по сканированию сайта.', '', 0, 'low'));
   }
 
   // 11. Sitemap
   if (!sitemapFound) {
-    issues.push(issue('sitemap', 'warning', 'sitemap.xml не найден', 'Без sitemap медленнее индексация новых страниц.', 'Сгенерируйте sitemap.xml и пропишите его в robots.txt.', 35, 'low'));
+    issues.push(issue('sitemap', 'warning', 'Нет карты сайта (sitemap.xml)', 'Sitemap — это файл со списком всех страниц вашего сайта. Без него Google дольше находит новые страницы.', 'Создайте sitemap.xml. В WordPress — плагин Yoast SEO делает это автоматически. В Tilda — есть встроенная функция. Добавьте адрес sitemap в robots.txt.', 35, 'low'));
   } else {
-    issues.push(issue('sitemap', 'ok', `sitemap.xml найден (${sitemapUrls} URL)`, 'Sitemap доступен.', '', 0, 'low'));
+    issues.push(issue('sitemap', 'ok', `✅ Карта сайта есть (${sitemapUrls} страниц)`, 'Google видит список всех страниц сайта.', '', 0, 'low'));
   }
 
   // 12. Schema.org
   if (schemas.length === 0) {
-    issues.push(issue('schema', 'warning', 'Нет structured data (schema.org)', 'Без JSON-LD нет расширенных сниппетов в выдаче (rating, FAQ, breadcrumbs).', 'Добавьте минимум Organization / WebSite / BreadcrumbList JSON-LD.', 40, 'medium'));
+    issues.push(issue('schema', 'warning', 'Нет расширенных данных для Google (schema.org)', 'На странице нет специальной разметки, которая помогает Google показывать звёзды, отзывы, FAQ прямо в результатах поиска. Конкуренты с разметкой выглядят привлекательнее.', 'Добавьте JSON-LD разметку. В WordPress — плагин Yoast SEO или Rank Math делают это автоматически. Минимум: Organization (название, телефон, адрес) и FAQ (вопросы-ответы).', 40, 'medium'));
   } else {
     const invalid = schemas.filter((s) => !s.valid);
     if (invalid.length > 0) {
-      issues.push(issue('schema', 'warning', `${invalid.length} невалидных schema-блоков`, invalid.map((s) => `${s.type}: ${(s.errors || []).join(', ')}`).join('; '), 'Исправьте JSON-LD валидацию через Google Rich Results Test.', 30, 'medium'));
+      issues.push(issue('schema', 'warning', `${invalid.length} блока разметки с ошибками`, invalid.map((s) => `${s.type}: ${(s.errors || []).join(', ')}`).join('; ') + '. Разметка есть, но с ошибками — Google может её проигнорировать.', 'Проверьте разметку через Google Rich Results Test (search.google.com/test/rich-results). Исправьте ошибки в JSON-LD коде.', 30, 'medium'));
     } else {
-      issues.push(issue('schema', 'ok', `${schemas.length} schema-блоков, все валидны`, schemas.map((s) => s.type).join(', '), '', 0, 'low'));
+      issues.push(issue('schema', 'ok', `✅ Разметка schema.org работает (${schemas.length} блоков)`, `Типы: ${schemas.map((s) => s.type).join(', ')}`, '', 0, 'low'));
     }
   }
 
   // 13. Mobile
   if (!isMobileFriendly) {
-    issues.push(issue('mobile', 'critical', 'Не настроен viewport meta', 'Без viewport мобильные устройства показывают десктопную версию.', 'Добавьте <meta name="viewport" content="width=device-width, initial-scale=1">.', 75, 'low'));
+    issues.push(issue('mobile', 'critical', '🔴 Сайт плохо выглядит на телефоне', 'На странице нет настройки для мобильных устройств. Телефон показывает уменьшенную версию десктопа — текст мелкий, кнопки трудно нажимать. Google понижает такие сайты в выдаче.', 'Добавьте в <head> страницы: <meta name="viewport" content="width=device-width, initial-scale=1">. Попросите разработчика — это одна строчка кода.', 75, 'low'));
   } else {
-    issues.push(issue('mobile', 'ok', 'Viewport meta настроен', 'Мобильная адаптивность включена.', '', 0, 'low'));
+    issues.push(issue('mobile', 'ok', '✅ Сайт адаптирован для телефонов', 'Страница правильно отображается на мобильных устройствах.', '', 0, 'low'));
   }
 
   // 14. Open Graph (полная проверка)
@@ -831,63 +831,63 @@ export async function auditPage(targetUrl: string): Promise<PageAudit> {
   } else if (!meta.ogType || !meta.ogUrl) {
     issues.push(issue('meta', 'info', 'Не все Open Graph теги заданы', `og:type: ${meta.ogType ? '✓' : '✗'}, og:url: ${meta.ogUrl ? '✓' : '✗'}`, 'Добавьте og:type (website/article) и og:url (канонический URL страницы).', 20, 'low'));
   } else {
-    issues.push(issue('meta', 'ok', 'Open Graph теги заданы', `og:title, og:description, og:image, og:type, og:url — все на месте.`, '', 0, 'low'));
+    issues.push(issue('meta', 'ok', '✅ Превью для соцсетей настроено', 'Ссылка на сайт красиво отображается в WhatsApp, Telegram и соцсетях.', '', 0, 'low'));
   }
 
   // 14.1. Twitter Card
   if (!meta.twitterCard) {
-    issues.push(issue('meta', 'info', 'Отсутствует twitter:card', 'Без twitter:card превью в Twitter/X может отображаться криво.', 'Добавьте <meta name="twitter:card" content="summary_large_image"> + twitter:title, twitter:description, twitter:image.', 15, 'low'));
+    issues.push(issue('meta', 'info', 'Нет превью для Twitter/X', 'Ссылка на ваш сайт может отображаться без картинки в Twitter. Сейчас Twitter/X используется реже, но если ваша аудитория там есть — стоит настроить.', 'Добавьте twitter:card мета-теги. Большинство SEO-плагинов (Yoast, Rank Math) делают это автоматически.', 15, 'low'));
   } else {
-    issues.push(issue('meta', 'ok', `Twitter Card: ${meta.twitterCard}`, 'Превью в Twitter/X настроено.', '', 0, 'low'));
+    issues.push(issue('meta', 'ok', `✅ Превью для Twitter/X настроено`, `Тип: ${meta.twitterCard}`, '', 0, 'low'));
   }
 
   // 14.2. Favicon
   if (!meta.favicon) {
-    issues.push(issue('meta', 'warning', 'Favicon не найден', 'Без favicon браузеры показывают дефолтную иконку, хуже узнаваемость бренда в вкладках.', 'Добавьте <link rel="icon" href="/favicon.ico"> или PNG/SVG favicon.', 35, 'low'));
+    issues.push(issue('meta', 'warning', 'Нет иконки сайта (favicon)', 'У сайта нет favicon — маленькой иконки во вкладке браузера. Без неё вкладка выглядит безликой, а в результатах поиска Google нет иконки рядом с названием.', 'Создайте favicon (иконку 32x32 пикселя) и загрузите в корень сайта. В WordPress: Внешний вид → Настроить → Свойства сайта → Иконка сайта.', 35, 'low'));
   } else {
-    issues.push(issue('meta', 'ok', 'Favicon задан', meta.favicon, '', 0, 'low'));
+    issues.push(issue('meta', 'ok', '✅ Иконка сайта (favicon) на месте', meta.favicon, '', 0, 'low'));
   }
 
   // 14.3. Apple Touch Icon (iOS)
   if (!meta.appleTouchIcon) {
-    issues.push(issue('mobile', 'info', 'Отсутствует apple-touch-icon', 'Без apple-touch-icon иконка сайта на iOS (home screen) выглядит как скриншот страницы.', 'Добавьте <link rel="apple-touch-icon" href="/apple-touch-icon.png"> (180x180 PNG).', 20, 'low'));
+    issues.push(issue('mobile', 'info', 'Нет иконки для iPhone', 'Если пользователь добавит ваш сайт на главный экран iPhone, иконка будет выглядеть как скриншот, а не как нормальная иконка приложения.', 'Создайте иконку 180x180 пикселей (PNG) и добавьте в <head>: <link rel="apple-touch-icon" href="/apple-touch-icon.png">. Не критично, но улучшает узнаваемость.', 20, 'low'));
   } else {
-    issues.push(issue('mobile', 'ok', 'Apple Touch Icon задан', meta.appleTouchIcon, '', 0, 'low'));
+    issues.push(issue('mobile', 'ok', '✅ Иконка для iPhone настроена', meta.appleTouchIcon, '', 0, 'low'));
   }
 
   // 14.4. Theme Color (Android Chrome)
   if (!meta.themeColor) {
-    issues.push(issue('mobile', 'info', 'Отсутствует theme-color', 'Без theme-color Android Chrome не окрашивает адресную строку в цвет бренда.', 'Добавьте <meta name="theme-color" content="#F59E0B">.', 15, 'low'));
+    issues.push(issue('mobile', 'info', 'Нет цвета адресной строки', 'На Android Chrome адресная строка остаётся серой вместо цвета вашего бренда. Мелочь, но делает сайт более фирменным.', 'Добавьте в <head>: <meta name="theme-color" content="#ЦВЕТ">. Например, #F59E0B для оранжевого.', 15, 'low'));
   } else {
-    issues.push(issue('mobile', 'ok', `Theme Color: ${meta.themeColor}`, 'Android Chrome покрасит адресную строку.', '', 0, 'low'));
+    issues.push(issue('mobile', 'ok', `✅ Цвет адресной строки настроен (${meta.themeColor})`, 'Android Chrome окрашивает адресную строку в цвет вашего бренда.', '', 0, 'low'));
   }
 
   // 14.5. ЧПУ (человекопонятный URL)
   if (!urlStructure.isHumanReadable) {
     const desc = urlStructure.issues.join(' ');
-    issues.push(issue('meta', 'warning', 'URL не ЧПУ (не человекопонятный)', desc, 'Включите ЧПУ: для WordPress — Настройки → Постоянные ссылки → «Название записи». Структура /category/post-name/ лучше, чем ?p=123.', 35, 'medium'));
+    issues.push(issue('meta', 'warning', 'Адрес страницы непонятный для людей', desc + ' Человекопонятный адрес (например, /uslugi/seo/) лучше для людей и Google, чем /?p=123.', 'В WordPress: Настройки → Постоянные ссылки → выберите «Название записи». В Tilda: настройки страницы → URL. Сделайте адрес коротким и понятным.', 35, 'medium'));
   } else {
-    issues.push(issue('meta', 'ok', 'URL человекопонятный (ЧПУ)', finalUrl, '', 0, 'low'));
+    issues.push(issue('meta', 'ok', '✅ Адрес страницы понятный', finalUrl, '', 0, 'low'));
   }
 
   // 14.6. Редирект HTTP → HTTPS
   if (httpsRedirect === false) {
-    issues.push(issue('security', 'critical', 'Нет редиректа HTTP → HTTPS', 'HTTP-версия доступна без редиректа на HTTPS — поисковики могут индексировать обе версии, дубли контента.', 'Настройте 301-редирект с http:// на https:// в .htaccess / Nginx / Caddy.', 70, 'low'));
+    issues.push(issue('security', 'critical', '🔴 Сайт доступен по небезопасному HTTP', 'Сайт открывается через http:// (без замка в адресной строке). Google считает это небезопасным и понижает в выдаче. Данные посетителей могут быть перехвачены.', 'Включите HTTPS в настройках хостинга. Настройте автоматический редирект с http:// на https://. Если используете Vercel или Cloudflare — это делается одной галочкой.', 70, 'low'));
   } else if (httpsRedirect === true) {
-    issues.push(issue('security', 'ok', 'Редирект HTTP → HTTPS работает', 'HTTP автоматически перенаправляет на HTTPS.', '', 0, 'low'));
+    issues.push(issue('security', 'ok', '✅ HTTPS работает правильно', 'Сайт автоматически перенаправляет с http:// на https:// — данные защищены.', '', 0, 'low'));
   } else {
     // null — HTTP недоступен, что нормально для HTTPS-only сайтов
-    issues.push(issue('security', 'info', 'HTTP-версия недоступна', 'Сайт доступен только по HTTPS — это нормально.', '', 0, 'low'));
+    issues.push(issue('security', 'info', '✅ Сайт работает только по HTTPS', 'HTTP-версия недоступна — это нормально и безопасно.', '', 0, 'low'));
   }
 
   // 15. Performance: размер ответа
   if (responseSizeKb > 500) {
-    issues.push(issue('performance', 'warning', `Тяжёлая HTML-страница (${responseSizeKb} KB)`, 'Большой размер замедляет LCP и FCP.', 'Оптимизируйте изображения, минифицируйте CSS/JS, включите gzip/brotli.', 40, 'medium'));
+    issues.push(issue('performance', 'warning', `Страница слишком тяжёлая (${responseSizeKb} KB)`, 'Страница весит ${responseSizeKb} KB — это много. Google учитывает скорость загрузки при ранжировании. Тяжёлые страницы загружаются медленно, особенно на телефоне.', 'Уменьшите размер картинок (используйте формат WebP), удалите ненужные плагины, включите сжатие (gzip) в настройках хостинга.', 40, 'medium'));
   }
 
   // 16. Performance: TTFB
   if (loadTimeMs > 2500) {
-    issues.push(issue('performance', 'warning', `Медленный ответ сервера (${loadTimeMs} мс)`, 'TTFB > 2.5с негативно влияет на краулинг и UX.', 'Оптимизируйте backend/CDN, включите кэширование.', 45, 'medium'));
+    issues.push(issue('performance', 'warning', `Медленная загрузка (${loadTimeMs} мс)`, `Сайт отвечает за ${loadTimeMs} мс. Google считает хорошим всё меньше 2500 мс (2.5 сек). Медленный сайт теряет посетителей — 40% уходят через 3 секунды.`, 'Включите кэширование в CMS. Проверьте хостинг — возможно нужен более мощный тариф. Уменьшите размер картинок. Включите CDN (Cloudflare — бесплатно).', 45, 'medium'));
   }
 
   // Security

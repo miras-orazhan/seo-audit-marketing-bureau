@@ -11,10 +11,12 @@ const RATE_LIMIT = { routeId: 'analyze', max: 5, windowMs: 60_000 };
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-oss-20b:free';
 
-const SYSTEM_PROMPT = `Ты SEO-аналитик. Верни ТОЛЬКО валидный JSON без markdown. Схема:
-{"intent":{"detected":"строка","matchScore":0,"gaps":[]},"contentScore":0,"summary":"1 предложение","fixes":[{"type":"title","title":"","after":"текст","rationale":"","impact":0,"effort":"low"}]}
+const SYSTEM_PROMPT = `Ты SEO-аналитик. Объясняй простым языком, без жаргона. Верни ТОЛЬКО валидный JSON без markdown. Схема:
+{"intent":{"detected":"простыми словами: для чего эта страница (магазин, блог, визитка)","matchScore":0,"gaps":["что не хватает на странице, простыми словами"]},"contentScore":0,"summary":"1-2 предложения простым языком: хорошо или плохо написан текст и почему","fixes":[{"type":"title","title":"короткое название правки","after":"готовый текст для вставки","rationale":"почему это важно — простыми словами, без SEO-терминов","impact":0,"effort":"low"}]}
 type: title|description|headings|faq_schema|intent
-Верни 3 правки.`;
+impact: 0-100 (насколько сильно повлияет на позиции в Google)
+effort: "low" (5 минут) | "medium" (1-2 часа) | "high" (нужен разработчик)
+Верни 3 правки. Все тексты на русском, простыми словами.`;
 
 export async function POST(req: NextRequest) {
   const limited = rateLimitResponse(req, RATE_LIMIT);

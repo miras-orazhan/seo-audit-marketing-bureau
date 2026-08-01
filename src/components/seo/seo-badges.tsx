@@ -111,8 +111,8 @@ export function EffortBadge({ effort }: { effort: 'low' | 'medium' | 'high' }) {
     medium: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
     high: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400',
   };
-  const labels = { low: 'Легко', medium: 'Средне', high: 'Сложно' };
-  const hint = 'Трудозатраты: Легко = 5 минут, Средне = 1-2 часа, Сложно = нужен разработчик.';
+  const labels = { low: '5 мин', medium: '1-2 часа', high: 'Нужен разработчик' };
+  const hint = 'Сколько времени займёт исправление: 5 минут / 1-2 часа / нужен разработчик';
   return (
     <Tooltip content={hint}>
       <span className={cn('cursor-help rounded px-1.5 py-0.5 text-[10px] font-medium uppercase', styles[effort])}>
