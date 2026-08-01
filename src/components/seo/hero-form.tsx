@@ -60,18 +60,6 @@ export function HeroForm({ onLeadClick }: { onLeadClick?: () => void }) {
               Вставьте адрес сайта — и через полминуты узнаете, что мешает вам подниматься в поиске Google.
               Не просто список ошибок, а понятные правки: что именно поменять и как.
             </p>
-
-            <div className="mt-8 hidden lg:block">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={onLeadClick}
-                className="border-amber-500/40 bg-transparent text-amber-400 hover:bg-amber-500/10 hover:text-amber-400"
-              >
-                Заказать SEO-продвижение под ключ
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
           </motion.div>
 
           {/* Правая колонка — форма аудита */}
