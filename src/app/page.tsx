@@ -7,7 +7,7 @@ import { AuditDashboard } from '@/components/seo/audit-dashboard';
 import { ChatPanel } from '@/components/seo/chat-panel';
 import { LeadFormSection } from '@/components/seo/lead-form';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, ChevronDown } from 'lucide-react';
+import { ArrowRight, Phone, ChevronDown, Search, Bot, MessageSquare, Link2, FileText, Globe, ShieldCheck, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ServiceItem { title: string; description: string }
@@ -203,19 +203,25 @@ function StatsBar({ settings, stats }: { settings: SiteSettings; stats: StatsDat
 function FeaturesSection() {
   const features = [
     {
+      icon: Search,
       title: 'Техническая проверка сайта',
       text: 'Смотрим, нет ли на сайте технических ошибок, которые мешают Google находить и правильно показывать ваши страницы: битые ссылки, дубли, медленная загрузка, неудобство на телефоне.',
       tags: ['Canonical', 'Schema.org', 'Mobile', 'Security'],
+      gradient: 'from-amber-500 to-orange-500',
     },
     {
+      icon: Bot,
       title: 'Готовность к поиску через нейросети',
       text: 'Люди всё чаще спрашивают у ChatGPT или Google AI, а не гуглят по старинке. Проверяем, сможет ли нейросеть найти ваш сайт и процитировать именно вас, а не конкурента.',
       tags: ['AI Overviews', 'E-E-A-T', 'Entity', 'OG tags'],
+      gradient: 'from-indigo-500 to-purple-500',
     },
     {
+      icon: MessageSquare,
       title: 'Готовность отвечать на прямые вопросы',
       text: 'Проверяем, легко ли на вашем сайте найти короткий прямой ответ на вопрос — то, что любят показывать первым и Google, и голосовые помощники.',
       tags: ['FAQ schema', 'Snippets', 'Intent', 'AI правки'],
+      gradient: 'from-emerald-500 to-teal-500',
     },
   ];
 
@@ -234,27 +240,24 @@ function FeaturesSection() {
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 md:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
           {features.map((f, i) => (
             <motion.div
-              key={f.title}
+              key={i}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="group relative bg-white p-6 transition-colors hover:bg-amber-50"
+              className="group flex flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:shadow-lg"
             >
-              <span className="font-mono text-sm font-bold text-amber-600">0{i + 1}</span>
-              <h3 className="mt-2 text-lg font-bold">{f.title}</h3>
+              <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${f.gradient} shadow-md`}>
+                <f.icon className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="mt-4 text-lg font-bold">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-neutral-600">{f.text}</p>
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {f.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-medium text-neutral-600"
-                  >
-                    {t}
-                  </span>
+                  <span key={t} className="rounded border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-medium text-neutral-600">{t}</span>
                 ))}
               </div>
             </motion.div>
@@ -268,17 +271,17 @@ function FeaturesSection() {
 function HowItWorksSection() {
   const steps = [
     {
-      n: '01',
+      icon: Link2,
       title: 'Вставьте адрес сайта',
       text: 'Просто вставьте ссылку. Дальше всё делаем мы — проверяем страницу и собираем весь текст, который на ней есть.',
     },
     {
-      n: '02',
+      icon: Bot,
       title: 'AI разбирает контент',
       text: 'Программа читает ваш сайт как реальный посетитель: понимает, для чего он нужен, оценивает качество текста и готовит правки — что изменить в заголовках и описаниях.',
     },
     {
-      n: '03',
+      icon: FileText,
       title: 'Вы получаете понятный план',
       text: 'Оценка от 0 до 100 и топ-5 правок — с чего начать в первую очередь. Можно скачать в PDF или спросить у AI-помощника.',
     },
@@ -296,19 +299,26 @@ function HowItWorksSection() {
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="relative mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+          {/* Соединительная линия на десктопе */}
+          <div className="absolute left-0 right-0 top-6 hidden h-0.5 bg-gradient-to-r from-amber-200 via-indigo-200 to-emerald-200 md:block" />
+
           {steps.map((s, i) => (
             <motion.div
-              key={s.n}
+              key={i}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="relative"
+              className="relative flex flex-col items-center text-center"
             >
-              <span className="font-display font-mono text-6xl font-extrabold text-amber-500/40">{s.n}</span>
-              <h3 className="mt-2 text-lg font-bold">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-600">{s.text}</p>
+              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md ring-4 ring-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-indigo-500">
+                  <s.icon className="h-5 w-5 text-white" />
+                </div>
+              </div>
+              <h3 className="mt-4 text-base font-bold">{s.title}</h3>
+              <p className="mt-2 max-w-xs text-sm leading-relaxed text-neutral-600">{s.text}</p>
             </motion.div>
           ))}
         </div>

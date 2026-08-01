@@ -153,23 +153,21 @@ export function HeroForm({ onLeadClick }: { onLeadClick?: () => void }) {
               </div>
             </div>
 
-            {/* Превью-карточка снизу */}
+            {/* Кнопка под формой */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-neutral-700 bg-neutral-700 text-center text-xs"
+              className="mt-4"
             >
-              {[
-                { label: 'Тех. аудит', val: '17+ проверок' },
-                { label: 'AI-контент', val: '7 правок' },
-                { label: 'Скор', val: '0–100' },
-              ].map((it) => (
-                <div key={it.label} className="bg-neutral-900 p-3">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-amber-400">{it.label}</p>
-                  <p className="mt-1 font-semibold text-white">{it.val}</p>
-                </div>
-              ))}
+              <Button
+                variant="outline"
+                className="w-full border-neutral-600 bg-transparent text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                onClick={onLeadClick}
+              >
+                Заказать SEO-продвижение под ключ
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </motion.div>
           </motion.div>
         </div>
