@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ZAI from 'z-ai-web-dev-sdk';
 import type { PageAudit, AIContentAnalysis, AIContentFix } from '@/lib/seo-types';
 import { rateLimitResponse } from '@/lib/rate-limit';
 
@@ -9,7 +8,9 @@ export const dynamic = 'force-dynamic';
 
 const RATE_LIMIT = { routeId: 'analyze', max: 5, windowMs: 60_000 };
 
-// Максимально короткий промпт для скорости
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-oss-20b:free';
+
 const SYSTEM_PROMPT = `Ты SEO-аналитик. Верни ТОЛЬКО валидный JSON без markdown. Схема:
 {"intent":{"detected":"строка","matchScore":0,"gaps":[]},"contentScore":0,"summary":"1 предложение","fixes":[{"type":"title","title":"","after":"текст","rationale":"","impact":0,"effort":"low"}]}
 type: title|description|headings|faq_schema|intent
@@ -26,7 +27,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'page object is required' }, { status: 400 });
     }
 
-    // Минимальный контекст для AI — только самое важное
     const contextForAI = {
       url: page.url,
       title: page.meta.title || '(нет title)',
@@ -39,22 +39,36 @@ export async function POST(req: NextRequest) {
     let rawContent = '';
     let lastError = '';
 
-    // Retry: 2 попытки, без долгих задержек
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const zai = await ZAI.create();
-        const completion = await zai.chat.completions.create({
-          messages: [
-            { role: 'assistant', content: SYSTEM_PROMPT },
-            { role: 'user', content: JSON.stringify(contextForAI) },
-          ],
-          thinking: { type: 'disabled' },
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: OPENROUTER_MODEL,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: JSON.stringify(contextForAI) },
+            ],
+            max_tokens: 1000,
+            temperature: 0.7,
+          }),
+          signal: AbortSignal.timeout(30000),
         });
-        rawContent = completion.choices[0]?.message?.content || '';
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        rawContent = data.choices?.[0]?.message?.content || '';
         if (rawContent) break;
       } catch (err) {
         lastError = err instanceof Error ? err.message : String(err);
-        // Если 429 — ждём 3 сек и повторяем
         if (lastError.includes('429') && attempt < 2) {
           await new Promise(r => setTimeout(r, 3000));
           continue;
@@ -63,30 +77,23 @@ export async function POST(req: NextRequest) {
     }
 
     if (!rawContent) {
-      // AI не ответил — возвращаем fallback, но с ok: true
-      // чтобы клиент не показывал ошибку, а использовал fallback данные
       return NextResponse.json({
         ok: true,
         analysis: {
-          intent: {
-            detected: 'AI временно недоступен — попробуйте позже',
-            matchScore: 0,
-            gaps: [],
-          },
+          intent: { detected: 'AI временно недоступен', matchScore: 0, gaps: [] },
           contentScore: 50,
-          summary: 'Тех. аудит завершён. AI-анализ контента не удалось выполнить. Технические результаты и roadmap доступны.',
+          summary: 'Тех. аудит завершён. AI-анализ недоступен — результаты ниже.',
           fixes: [],
         },
       });
     }
 
-    // Парсим JSON — несколько попыток очистки
+    // Парсим JSON
     let parsed: AIContentAnalysis | null = null;
 
     try {
       parsed = JSON.parse(rawContent);
     } catch {
-      // Убираем markdown-обёртку
       const cleaned = rawContent
         .replace(/```json\s*/gi, '')
         .replace(/```\s*/g, '')
@@ -95,11 +102,7 @@ export async function POST(req: NextRequest) {
         .trim();
       const match = cleaned.match(/\{[\s\S]*\}/);
       if (match) {
-        try {
-          parsed = JSON.parse(match[0]);
-        } catch {
-          // Не удалось распарсить
-        }
+        try { parsed = JSON.parse(match[0]); } catch { /* ignore */ }
       }
     }
 
@@ -107,11 +110,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         ok: true,
         analysis: {
-          intent: {
-            detected: 'AI вернул некорректный формат',
-            matchScore: 0,
-            gaps: [],
-          },
+          intent: { detected: 'AI вернул некорректный формат', matchScore: 0, gaps: [] },
           contentScore: 50,
           summary: 'Тех. аудит завершён. AI-ответ не удалось обработать.',
           fixes: [],
@@ -148,15 +147,10 @@ export async function POST(req: NextRequest) {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'AI analysis failed';
     console.error('[/api/analyze] error:', msg);
-    // Возвращаем ok: true с fallback — не пугаем пользователя
     return NextResponse.json({
       ok: true,
       analysis: {
-        intent: {
-          detected: 'AI временно недоступен',
-          matchScore: 0,
-          gaps: [],
-        },
+        intent: { detected: 'AI временно недоступен', matchScore: 0, gaps: [] },
         contentScore: 50,
         summary: 'Тех. аудит завершён. AI-анализ недоступен — результаты ниже.',
         fixes: [],

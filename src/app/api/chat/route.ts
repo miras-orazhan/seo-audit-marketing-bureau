@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ZAI from 'z-ai-web-dev-sdk';
 import { rateLimitResponse } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 30;
 
-// 20 сообщений в минуту на IP — чат дешевле analyze, но тоже режем абьюз.
 const RATE_LIMIT = { routeId: 'chat', max: 20, windowMs: 60_000 };
 
-const SYSTEM_PROMPT = `Ты — встроенный SEO-ассистент в дашборде аудита. Пользователь видит отчёт и задаёт вопросы по нему.
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-oss-20b:free';
 
-Правила:
-- Отвечай на русском языке, кратко и по делу.
-- Если спрашивают про конкретную проблему — объясни, почему она важна для SEO и как именно её исправить.
-- Если просят переписать текст/title/description — давай готовый вариант, который можно скопировать.
-- Ссылайся на конкретные пункты из предоставленного контекста отчёта.
-- Не выдумывай факты. Если данных недостаточно — честно скажи.`;
+const SYSTEM_PROMPT = `Ты — встроенный SEO-ассистент в дашборде аудита. Отвечай на русском, кратко и по делу. Если просят переписать текст — давай готовый вариант.`;
 
 interface ChatRequestBody {
   message: string;
@@ -24,7 +18,6 @@ interface ChatRequestBody {
 }
 
 export async function POST(req: NextRequest) {
-  // Rate limit
   const limited = rateLimitResponse(req, RATE_LIMIT);
   if (limited) return limited;
 
@@ -34,34 +27,42 @@ export async function POST(req: NextRequest) {
     if (!message) {
       return NextResponse.json({ error: 'message is required' }, { status: 400 });
     }
-    if (!body.reportSummary) {
-      return NextResponse.json({ error: 'reportSummary is required' }, { status: 400 });
-    }
 
-    const zai = await ZAI.create();
     const messages = [
-      { role: 'assistant' as const, content: SYSTEM_PROMPT },
-      {
-        role: 'assistant' as const,
-        content: `Контекст текущего отчёта аудита:\n\n${body.reportSummary}\n\nИспользуй эти данные при ответе. Если вопроса нет в отчёте — ответь общими SEO-рекомендациями.`,
-      },
-      ...(body.history || []).slice(-8).map((m) => ({
-        role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: `Контекст отчёта:\n${body.reportSummary}` },
+      ...(body.history || []).slice(-6).map((m) => ({
+        role: m.role,
         content: m.content,
       })),
-      { role: 'user' as const, content: message },
+      { role: 'user', content: message },
     ];
 
-    const completion = await zai.chat.completions.create({
-      messages,
-      thinking: { type: 'disabled' },
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        messages,
+        max_tokens: 500,
+        temperature: 0.7,
+      }),
+      signal: AbortSignal.timeout(25000),
     });
 
-    const reply = completion.choices[0]?.message?.content || 'Не удалось сформировать ответ.';
+    if (!res.ok) {
+      throw new Error(`OpenRouter HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || 'Не удалось сформировать ответ.';
     return NextResponse.json({ reply });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Chat failed';
-    console.error('[/api/chat] error:', msg, e);
+    console.error('[/api/chat] error:', msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
