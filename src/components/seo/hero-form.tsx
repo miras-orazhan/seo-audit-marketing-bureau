@@ -183,46 +183,122 @@ export function ScanProgress() {
 
   if (progress.stage === 'idle' || progress.stage === 'done') return null;
 
+  const steps = [
+    { label: 'Загрузка страницы', threshold: 15 },
+    { label: 'Проверка мета-тегов', threshold: 30 },
+    { label: 'Анализ заголовков', threshold: 45 },
+    { label: 'Проверка schema.org', threshold: 55 },
+    { label: 'Security-заголовки', threshold: 65 },
+    { label: 'Семантическое ядро', threshold: 75 },
+    { label: 'Читабельность текста', threshold: 82 },
+    { label: 'Внутренние ссылки', threshold: 88 },
+    { label: 'AI-анализ контента', threshold: 95 },
+  ];
+
+  const isError = progress.stage === 'error';
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16">
+    <div className="mx-auto max-w-2xl px-4 py-16">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl border bg-white p-6 shadow-xl sm:p-8"
+        className="relative overflow-hidden rounded-2xl border bg-white p-6 shadow-xl sm:p-10"
       >
-        <div className="relative flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-xs text-neutral-500">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-500" />
-              Аудит в процессе
-            </div>
-            <p className="mt-1 truncate font-medium">{targetUrl}</p>
+        {/* Анимированный градиентный фон */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-amber-400/20 blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-0 h-32 w-32 rounded-full bg-indigo-400/10 blur-3xl" />
+        </div>
+
+        {/* Заголовок */}
+        <div className="text-center">
+          <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center">
+            {/* Вращающееся кольцо */}
+            <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="36" stroke="#e2e8f0" strokeWidth="4" fill="none" />
+              <motion.circle
+                cx="40" cy="40" r="36"
+                stroke="url(#progressGradient)"
+                strokeWidth="4"
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 36}
+                animate={{ strokeDashoffset: 2 * Math.PI * 36 - (2 * Math.PI * 36 * progress.percent) / 100 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              />
+              <defs>
+                <linearGradient id="progressGradient" x1="0" y1="0" x2="80" y2="80">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#6366f1" />
+                </linearGradient>
+              </defs>
+            </svg>
+            {/* Процент в центре */}
+            <span className="font-display text-xl font-extrabold tabular-nums text-neutral-900">
+              {progress.percent}%
+            </span>
           </div>
-          <span className="font-display text-3xl font-extrabold tabular-nums text-amber-600">
-            {progress.percent}%
-          </span>
+
+          <h2 className="font-display text-xl font-bold text-neutral-900">
+            {isError ? 'Ошибка аудита' : 'Анализируем сайт'}
+          </h2>
+          <p className="mt-1 truncate text-sm text-neutral-500">{targetUrl}</p>
         </div>
 
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-neutral-100">
-          <motion.div
-            className="h-full rounded-full bg-amber-500"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress.percent}%` }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
+        {/* Список шагов с анимацией */}
+        {!isError && (
+          <div className="mt-8 space-y-2.5">
+            {steps.map((step, i) => {
+              const isDone = progress.percent >= step.threshold;
+              const isCurrent = !isDone && (i === 0 || progress.percent >= steps[i - 1].threshold);
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0.3 }}
+                  animate={{ opacity: isDone || isCurrent ? 1 : 0.3 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center">
+                    {isDone ? (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>
+                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      </motion.div>
+                    ) : isCurrent ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+                    ) : (
+                      <div className="h-2 w-2 rounded-full bg-neutral-300" />
+                    )}
+                  </div>
+                  <span className={`text-sm ${isDone ? 'text-neutral-400 line-through' : isCurrent ? 'font-medium text-neutral-900' : 'text-neutral-400'}`}>
+                    {step.label}
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
-        <p className="mt-3 text-sm text-neutral-600">{progress.message}</p>
+        {/* Текущее сообщение */}
+        {!isError && progress.message && (
+          <motion.p
+            key={progress.message}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 rounded-lg bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-800"
+          >
+            {progress.message}
+          </motion.p>
+        )}
 
-        {progress.stage === 'error' && (
-          <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        {/* Ошибка */}
+        {isError && (
+          <div className="mt-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
-              <p className="font-medium">Не удалось выполнить аудит</p>
-              <p className="mt-0.5 text-xs opacity-90">{progress.message}</p>
-              <p className="mt-1 text-xs opacity-75">
-                Проверьте URL или попробуйте другой сайт. Если проблема повторяется —
-                напишите нам, поможем вручную.
+              <p className="font-semibold">Не удалось выполнить аудит</p>
+              <p className="mt-1 text-xs opacity-90">{progress.message}</p>
+              <p className="mt-2 text-xs opacity-75">
+                Проверьте URL или попробуйте другой сайт. Если проблема повторяется — напишите нам.
               </p>
             </div>
           </div>

@@ -55,6 +55,18 @@ export function SeverityBadge({ severity, showDot = true, className }: SeverityB
   );
 }
 
+// Буквенная оценка как в SEOptimer (A+ до F-)
+export function scoreToGrade(score: number): { grade: string; color: string; label: string } {
+  if (score >= 90) return { grade: 'A+', color: '#10b981', label: 'Отлично' };
+  if (score >= 80) return { grade: 'A', color: '#10b981', label: 'Хорошо' };
+  if (score >= 70) return { grade: 'B+', color: '#84cc16', label: 'Неплохо' };
+  if (score >= 60) return { grade: 'B', color: '#eab308', label: 'Средне' };
+  if (score >= 50) return { grade: 'C+', color: '#f59e0b', label: 'Можно лучше' };
+  if (score >= 40) return { grade: 'C', color: '#f97316', label: 'Ниже среднего' };
+  if (score >= 30) return { grade: 'D', color: '#ef4444', label: 'Плохо' };
+  return { grade: 'F', color: '#dc2626', label: 'Очень плохо' };
+}
+
 export function ScoreRing({
   score,
   size = 96,
@@ -67,8 +79,8 @@ export function ScoreRing({
   const radius = (size - 12) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
-  const color =
-    score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : score >= 40 ? '#ef4444' : '#991b1b';
+  const grade = scoreToGrade(score);
+  const color = grade.color;
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -97,9 +109,9 @@ export function ScoreRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl font-bold" style={{ color }}>
-          {score}
+          {grade.grade}
         </span>
-        {label && <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>}
+        {label && <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{label}</span>}
       </div>
     </div>
   );

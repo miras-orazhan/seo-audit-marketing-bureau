@@ -151,6 +151,40 @@ export function AuditDashboard({ onLeadClick }: { onLeadClick?: () => void }) {
         </Card>
       </motion.div>
 
+      {/* Превью сниппета Google */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+        className="mt-6"
+      >
+        <Card>
+          <CardContent className="p-5">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">Как сайт выглядит в Google</p>
+            <div className="rounded-lg border border-neutral-200 bg-white p-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-bold text-neutral-500">
+                  {new URL(page.url).hostname[0]?.toUpperCase() || 'S'}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs text-neutral-500">{new URL(page.url).hostname}</p>
+                  <p className="truncate text-xs text-neutral-400">{page.url}</p>
+                </div>
+              </div>
+              <h3 className="mt-1.5 text-lg font-medium text-[#1a0dab] hover:underline cursor-pointer truncate">
+                {page.meta.title || '(нет заголовка — Google возьмёт случайный текст)'}
+              </h3>
+              <p className="mt-0.5 text-sm text-[#4d5156] line-clamp-2">
+                {page.meta.description || '(нет описания — Google покажет случайный кусок текста со страницы)'}
+              </p>
+            </div>
+            <p className="mt-2 text-xs text-neutral-400">
+              Так вашу страницу увидят люди в результатах поиска Google
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Roadmap */}
       {report.roadmap.length > 0 && (
         <motion.div
