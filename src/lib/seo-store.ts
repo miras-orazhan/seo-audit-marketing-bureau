@@ -118,49 +118,84 @@ export const useSeoStore = create<SeoState>((set, get) => ({
         progress: { stage: 'ai_analysis', message: STAGES[3].message, percent: STAGES[3].percent },
       });
 
-      // Шаг 4: AI-анализ контента (стриминговый SSE, чтобы прокси не резал длинные запросы).
-      // AI опционален — если он упал (таймаут/стрим оборвался), показываем только тех. аудит.
-      let analysis: PageAudit['aiAnalysis'];
-      try {
-        analysis = await fetchAiAnalysisStream(techData.page, (msg) => {
-          set({ progress: { stage: 'ai_analysis', message: msg, percent: STAGES[3].percent } });
-        });
-      } catch (aiErr) {
-        console.warn('[seo-store] AI analysis failed, using fallback:', aiErr);
-        analysis = {
-          intent: {
-            detected: 'AI-анализ недоступен (таймаут или ошибка стрима)',
-            matchScore: 0,
-            gaps: [],
-          },
-          contentScore: 50,
-          summary: 'Тех. аудит завершён. AI-анализ контента не удалось выполнить — показываем только технические проблемы. Попробуйте перезапустить аудит через минуту или задайте вопрос чат-ассистенту.',
+      // Шаг 4: Показываем результаты СРАЗУ — без ожидания AI
+      // AI-анализ загрузится в фоне после показа дашборда
+      const pageWithPlaceholder: PageAudit = {
+        ...techData.page,
+        aiAnalysis: {
+          intent: { detected: 'Загрузка AI-анализа…', matchScore: 0, gaps: [] },
+          contentScore: 0,
+          summary: 'AI-анализ контента загружается в фоновом режиме. Технические результаты уже доступны ниже.',
           fixes: [],
-        };
-      }
+        },
+      };
 
-      const pageWithAi: PageAudit = { ...techData.page, aiAnalysis: analysis };
-
-      // Шаг 5: скоринг + roadmap (на клиенте — детерминированная логика)
-      const { report } = buildReport(pageWithAi);
+      const { report: initialReport } = buildReport(pageWithPlaceholder);
 
       set({
-        report,
+        report: initialReport,
         progress: { stage: 'done', message: 'Готово', percent: 100 },
         isScanning: false,
       });
 
-      // Шаг 6: сохраняем результат аудита в Google Sheets (фоновый запрос,
-      // не блокируем UI — если упадёт, пользователь не заметит)
+      // Шаг 5: Сохраняем аудит в БД + Google Sheets
       try {
         await fetch('/api/audit-save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ report }),
+          body: JSON.stringify({ report: initialReport }),
         });
-      } catch {
-        // ignore — сохранение в Sheets опционально
-      }
+      } catch { /* ignore */ }
+
+      // Шаг 6: AI-анализ в ФОНЕ — не блокируем пользователя
+      // Показываем тех. аудит сразу, AI обновит дашборд когда будет готов
+      fetchAiAnalysisStream(techData.page, (msg) => {
+        // Обновляем только сообщение в AI-вкладке, не трогая остальное
+        const currentReport = get().report;
+        if (currentReport && currentReport.pages[0]?.aiAnalysis) {
+          set({
+            report: {
+              ...currentReport,
+              pages: [{
+                ...currentReport.pages[0],
+                aiAnalysis: {
+                  ...currentReport.pages[0].aiAnalysis!,
+                  summary: msg,
+                },
+              }],
+            },
+          });
+        }
+      }).then((analysis) => {
+        // AI успешно отработал — обновляем отчёт
+        const currentReport = get().report;
+        if (!currentReport) return;
+
+        const pageWithAi: PageAudit = { ...techData.page, aiAnalysis: analysis };
+        const { report: updatedReport } = buildReport(pageWithAi);
+
+        set({ report: updatedReport });
+      }).catch((aiErr) => {
+        console.warn('[seo-store] AI analysis failed (background):', aiErr);
+        // AI не сработал — обновляем placeholder на понятное сообщение
+        const currentReport = get().report;
+        if (!currentReport) return;
+
+        set({
+          report: {
+            ...currentReport,
+            pages: [{
+              ...currentReport.pages[0],
+              aiAnalysis: {
+                intent: { detected: 'AI-анализ недоступен', matchScore: 0, gaps: [] },
+                contentScore: 50,
+                summary: 'Тех. аудит завершён. AI-анализ временно недоступен — технические результаты и roadmap доступны ниже. Попробуйте перезапустить через минуту.',
+                fixes: [],
+              },
+            }],
+          },
+        });
+      });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Неизвестная ошибка';
       set({
@@ -376,19 +411,13 @@ async function fetchAiAnalysisStream(
   try {
     // Клиентский timeout 50 сек — если AI не уложился, бросаем исключение,
     // оно ловится в startScan и используется fallback. ALB режет на 30 сек,
-    // но мы держим 50 сек на случай если heartbeat продлит соединение.
-    const timeoutMs = 50000;
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('AI-анализ: превышен timeout 50 сек')), timeoutMs);
-    });
-
-    const fetchPromise = fetch('/api/analyze', {
+    // Убираем жёсткий timeout — AI идёт в фоне, пользователь уже видит результаты.
+    // Если соединение оборвётся — catch в startScan покажет понятное сообщение.
+    const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
       body: JSON.stringify({ page }),
     });
-
-    const res = await Promise.race([fetchPromise, timeoutPromise]);
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
