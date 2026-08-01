@@ -11,7 +11,7 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:3000',
   // Z.ai preview
   /^https:\/\/preview-.*\.space-z\.ai$/,
-  // Любой поддомен marketingbureau.kz (включая WordPress)
+  // Любой поддомен marketingbureau.kz (включая audit) (включая WordPress)
   /^https?:\/\/(www\.)?marketingbureau\.kz$/,
   // file:// для локального тестирования HTML
   'null',

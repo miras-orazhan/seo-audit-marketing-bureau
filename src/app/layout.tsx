@@ -23,8 +23,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://marketingbureau.kz"),
-  title: "SEO · GEO · AEO аудит сайта | Marketing Bureau",
+  metadataBase: new URL("https://audit.marketingbureau.kz"),
+  title: "AI SEO-аудит | Marketing Bureau",
   description:
     "Бесплатный AI SEO-аудит: технический разбор, GEO/AEO оптимизация, семантика, готовые правки. SEO в Казахстане.",
   keywords: [
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     "Marketing Bureau",
     "маркетинговое агентство",
   ],
-  authors: [{ name: "Marketing Bureau", url: "https://marketingbureau.kz" }],
+  authors: [{ name: "Marketing Bureau", url: "https://audit.marketingbureau.kz" }],
   creator: "Marketing Bureau",
   publisher: "Marketing Bureau",
   icons: {
@@ -50,10 +50,10 @@ export const metadata: Metadata = {
     apple: "/favicon.ico",
   },
   openGraph: {
-    title: "SEO · GEO · AEO аудит сайта | Marketing Bureau",
+    title: "AI SEO-аудит | Marketing Bureau",
     description:
       "Бесплатный AI SEO-аудит: технический разбор, GEO/AEO оптимизация, семантика, готовые правки. SEO в Казахстане.",
-    url: "https://marketingbureau.kz",
+    url: "https://audit.marketingbureau.kz",
     siteName: "Marketing Bureau",
     type: "website",
     locale: "ru_KZ",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SEO · GEO · AEO аудит сайта | Marketing Bureau",
+    title: "AI SEO-аудит | Marketing Bureau",
     description: "Бесплатный AI SEO-аудит: технический разбор, GEO/AEO оптимизация, семантика. SEO в Казахстане.",
     images: ["/logo.png"],
   },
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
   alternates: {
-    canonical: "https://marketingbureau.kz",
+    canonical: "https://audit.marketingbureau.kz",
   },
   category: 'SEO',
   other: {

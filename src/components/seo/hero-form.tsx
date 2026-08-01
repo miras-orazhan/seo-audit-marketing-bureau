@@ -57,8 +57,8 @@ export function HeroForm({ onLeadClick }: { onLeadClick?: () => void }) {
             </h1>
 
             <p className="mt-5 max-w-xl text-pretty text-base text-neutral-200 sm:text-lg">
-              Вставьте URL — получите 17+ технических проверок, AI-анализ контента, переписанные
-              мета-теги и roadmap из топ-5 правок. Не список проблем, а конкретные действия.
+              Вставьте адрес сайта — и через полминуты узнаете, что мешает вам подниматься в поиске Google.
+              Не просто список ошибок, а понятные правки: что именно поменять и как.
             </p>
 
             {/* Trust bullets */}
@@ -104,7 +104,7 @@ export function HeroForm({ onLeadClick }: { onLeadClick?: () => void }) {
                 <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                <span className="ml-2 text-xs text-neutral-500">marketingbureau.kz/audit</span>
+                <span className="ml-2 text-xs text-neutral-500">audit.marketingbureau.kz</span>
               </div>
 
               <h2 className="font-display text-2xl font-bold">Запустите аудит прямо сейчас</h2>

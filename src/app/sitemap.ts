@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://marketingbureau.kz';
+  const baseUrl = 'https://audit.marketingbureau.kz';
   const lastModified = new Date();
 
   return [

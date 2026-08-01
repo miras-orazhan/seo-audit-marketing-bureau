@@ -45,7 +45,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-neutral-50 text-neutral-900">
-      {/* Top nav — amber как в оригинальном marketingbureau.kz */}
+      {/* Top nav — amber как в оригинальном audit.marketingbureau.kz */}
       <header className="sticky top-0 z-30 bg-amber-500 shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <a href="/" className="flex items-center" aria-label="Marketing Bureau">
@@ -143,7 +143,7 @@ export default function Home() {
                   <Phone className="h-3.5 w-3.5 text-amber-500" /> +7(775)636 78 32
                 </li>
                 <li>marketingbureau.kz@gmail.com</li>
-                <li>marketingbureau.kz</li>
+                <li>audit.marketingbureau.kz</li>
               </ul>
             </div>
           </div>
@@ -152,8 +152,8 @@ export default function Home() {
               <p>© 2026 Marketing Bureau. Все права защищены.</p>
               <p>
                 Бесплатный AI SEO-аудит — сервис{' '}
-                <a href="https://marketingbureau.kz" className="font-medium text-amber-500 hover:underline">
-                  marketingbureau.kz
+                <a href="https://audit.marketingbureau.kz" className="font-medium text-amber-500 hover:underline">
+                  audit.marketingbureau.kz
                 </a>
               </p>
             </div>
@@ -203,18 +203,18 @@ function StatsBar({ settings, stats }: { settings: SiteSettings; stats: StatsDat
 function FeaturesSection() {
   const features = [
     {
-      title: 'SEO-аудит',
-      text: '17+ технических проверок: мета-теги, canonical, schema.org, robots.txt, sitemap, security-заголовки, мобильная адаптивность, семантическое ядро, читабельность, внутренние ссылки.',
-      tags: ['Canonical', 'Schema.org', 'Semantic', 'Readability'],
+      title: 'Техническая проверка сайта',
+      text: 'Смотрим, нет ли на сайте технических ошибок, которые мешают Google находить и правильно показывать ваши страницы: битые ссылки, дубли, медленная загрузка, неудобство на телефоне.',
+      tags: ['Canonical', 'Schema.org', 'Mobile', 'Security'],
     },
     {
-      title: 'GEO-анализ',
-      text: 'Оптимизация под AI-поиск: Google AI Overviews, ChatGPT, Perplexity. Проверка структурированных данных, entity-сигналов, E-E-A-T факторов, OG-тегов.',
+      title: 'Готовность к поиску через нейросети',
+      text: 'Люди всё чаще спрашивают у ChatGPT или Google AI, а не гуглят по старинке. Проверяем, сможет ли нейросеть найти ваш сайт и процитировать именно вас, а не конкурента.',
       tags: ['AI Overviews', 'E-E-A-T', 'Entity', 'OG tags'],
     },
     {
-      title: 'AEO-анализ',
-      text: 'Готовность к Answer Engines: FAQ-schema, featured snippets, голосовой поиск. AI генерирует прямые ответы, H2/H3, переписанные title и description.',
+      title: 'Готовность отвечать на прямые вопросы',
+      text: 'Проверяем, легко ли на вашем сайте найти короткий прямой ответ на вопрос — то, что любят показывать первым и Google, и голосовые помощники.',
       tags: ['FAQ schema', 'Snippets', 'Intent', 'AI правки'],
     },
   ];
@@ -225,12 +225,12 @@ function FeaturesSection() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">Возможности</p>
           <h2 className="mt-3 text-balance font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            SEO · GEO · AEO —{' '}
-            <span className="text-amber-600">полный анализ</span>
+            Проверяем сайт{' '}
+            <span className="text-amber-600">с трёх сторон</span>
           </h2>
           <p className="mt-4 text-pretty text-base text-neutral-600 sm:text-lg">
-            Технический аудит + оптимизация под AI-поиск + готовность к Answer Engines.
-            4 скор-категории и roadmap из топ-5 правок.
+            Классический поиск Google, нейросети вроде ChatGPT и голосовые помощники — сегодня люди ищут информацию по-разному.
+            Мы проверяем, видят ли вас все три.
           </p>
         </div>
 
@@ -269,18 +269,18 @@ function HowItWorksSection() {
   const steps = [
     {
       n: '01',
-      title: 'Вставьте URL сайта',
-      text: 'Введите URL. Краулер проверит мета-теги, canonical, schema.org, robots.txt, sitemap, security-заголовки и соберёт контент страницы.',
+      title: 'Вставьте адрес сайта',
+      text: 'Просто вставьте ссылку. Дальше всё делаем мы — проверяем страницу и собираем весь текст, который на ней есть.',
     },
     {
       n: '02',
-      title: 'AI анализирует контент',
-      text: 'AI определяет интент, оценивает контент в % и генерирует правки: title, description, H2/H3 и FAQ-schema JSON-LD.',
+      title: 'AI разбирает контент',
+      text: 'Программа читает ваш сайт как реальный посетитель: понимает, для чего он нужен, оценивает качество текста и готовит правки — что изменить в заголовках и описаниях.',
     },
     {
       n: '03',
-      title: 'Получите roadmap',
-      text: 'Скор 0–100 и топ-5 правок по приоритету. Экспорт в PDF, чат-ассистент по отчёту.',
+      title: 'Вы получаете понятный план',
+      text: 'Оценка от 0 до 100 и топ-5 правок — с чего начать в первую очередь. Можно скачать в PDF или спросить у AI-помощника.',
     },
   ];
   return (
@@ -374,24 +374,23 @@ function ServicesSection({ services, onLeadClick }: { services: ServiceItem[]; o
 
 function AuditCounter({ stats }: { stats: StatsData }) {
   const items = [
-    { value: String(stats.auditsTotal || 0), label: 'аудитов проведено' },
-    { value: String(stats.uniqueSitesAnalyzed || 0), label: 'уникальных сайтов проверено' },
-    { value: String(stats.leadsTotal || 0), label: 'заявок получено' },
+    { value: String(stats.uniqueSitesAnalyzed || 0), label: 'сайтов уже проверили' },
+    { value: String(stats.auditsTotal || 0), label: 'аудитов запущено' },
   ];
   return (
     <section id="stats" className="border-y border-neutral-200 bg-white py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">Статистика</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">В реальном времени</p>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Живые цифры — обновляются в реальном времени
+            Аудит уже работает
           </h2>
           <p className="mt-4 text-base text-neutral-600 sm:text-lg">
-            Каждый аудит и заявка автоматически попадают в базу данных
+            Каждая проверка сразу сохраняется в системе — вот что происходит прямо сейчас
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 max-w-2xl mx-auto">
           {items.map((s, i) => (
             <motion.div
               key={i}

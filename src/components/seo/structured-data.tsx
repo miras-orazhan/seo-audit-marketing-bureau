@@ -5,7 +5,7 @@
 // контент и понимать суть страницы.
 // ============================================================
 
-const BASE_URL = 'https://marketingbureau.kz';
+const BASE_URL = 'https://audit.marketingbureau.kz';
 
 // Organization — основная информация о компании
 const organizationSchema = {
@@ -38,7 +38,7 @@ const organizationSchema = {
   ],
   knowsLanguage: ['ru', 'kk', 'en'],
   sameAs: [
-    'https://marketingbureau.kz',
+    'https://audit.marketingbureau.kz',
   ],
   contactPoint: [
     {
@@ -117,7 +117,7 @@ const faqSchema = {
       name: 'Сколько стоит SEO-аудит сайта?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Базовый AI SEO-аудит на сайте Marketing Bureau (marketingbureau.kz) — бесплатный и не требует регистрации. Полный ручной SEO-аудит с отчётом на 40+ страниц и планом правок стоит от 90 000 тенге. Стоимость SEO-продвижения под ключ — от 150 000 тенге в месяц и зависит от ниши, региона и конкуренции.',
+        text: 'Базовый AI SEO-аудит на сайте Marketing Bureau (audit.marketingbureau.kz) — бесплатный и не требует регистрации. Полный ручной SEO-аудит с отчётом на 40+ страниц и планом правок стоит от 90 000 тенге. Стоимость SEO-продвижения под ключ — от 150 000 тенге в месяц и зависит от ниши, региона и конкуренции.',
       },
     },
     {
