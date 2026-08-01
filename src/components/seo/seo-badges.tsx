@@ -55,7 +55,7 @@ export function SeverityBadge({ severity, showDot = true, className }: SeverityB
   );
 }
 
-// Буквенная оценка как в SEOptimer (A+ до F-)
+// Буквенная оценка для справки
 export function scoreToGrade(score: number): { grade: string; color: string; label: string } {
   if (score >= 90) return { grade: 'A+', color: '#10b981', label: 'Отлично' };
   if (score >= 80) return { grade: 'A', color: '#10b981', label: 'Хорошо' };
@@ -79,8 +79,8 @@ export function ScoreRing({
   const radius = (size - 12) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
-  const grade = scoreToGrade(score);
-  const color = grade.color;
+  const color =
+    score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : score >= 40 ? '#ef4444' : '#991b1b';
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -109,7 +109,7 @@ export function ScoreRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl font-bold" style={{ color }}>
-          {grade.grade}
+          {score}%
         </span>
         {label && <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{label}</span>}
       </div>
@@ -117,35 +117,13 @@ export function ScoreRing({
   );
 }
 
-export function EffortBadge({ effort }: { effort: 'low' | 'medium' | 'high' }) {
-  const styles = {
-    low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
-    medium: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
-    high: 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400',
+// Простые цветные индикаторы статуса
+export function StatusDot({ severity }: { severity: 'critical' | 'warning' | 'info' | 'ok' }) {
+  const colors = {
+    critical: 'bg-red-500',
+    warning: 'bg-amber-500',
+    info: 'bg-blue-500',
+    ok: 'bg-emerald-500',
   };
-  const labels = { low: '5 мин', medium: '1-2 часа', high: 'Нужен разработчик' };
-  const hint = 'Сколько времени займёт исправление: 5 минут / 1-2 часа / нужен разработчик';
-  return (
-    <Tooltip content={hint}>
-      <span className={cn('cursor-help rounded px-1.5 py-0.5 text-[10px] font-medium uppercase', styles[effort])}>
-        {labels[effort]}
-      </span>
-    </Tooltip>
-  );
-}
-
-export function ImpactBar({ impact }: { impact: number }) {
-  const color =
-    impact >= 70 ? 'bg-red-500' : impact >= 40 ? 'bg-amber-500' : 'bg-emerald-500';
-  const hint = `Влияние на SEO: ${impact}/100. Чем выше — тем сильнее улучшит позиции в поиске.`;
-  return (
-    <Tooltip content={hint}>
-      <div className="flex cursor-help items-center gap-2">
-        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-          <div className={cn('h-full rounded-full', color)} style={{ width: `${impact}%` }} />
-        </div>
-        <span className="text-xs text-muted-foreground tabular-nums">{impact}</span>
-      </div>
-    </Tooltip>
-  );
+  return <span className={cn('inline-block h-2.5 w-2.5 rounded-full', colors[severity])} />;
 }
