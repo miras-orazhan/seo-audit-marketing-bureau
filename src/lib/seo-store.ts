@@ -118,94 +118,62 @@ export const useSeoStore = create<SeoState>((set, get) => ({
         progress: { stage: 'ai_analysis', message: STAGES[3].message, percent: STAGES[3].percent },
       });
 
-      // Шаг 4: Показываем результаты СРАЗУ — без ожидания AI
-      // AI-анализ загрузится в фоне после показа дашборда
-      const pageWithPlaceholder: PageAudit = {
-        ...techData.page,
-        aiAnalysis: {
-          intent: { detected: 'Загрузка AI-анализа…', matchScore: 0, gaps: [] },
-          contentScore: 0,
-          summary: 'AI-анализ контента загружается в фоновом режиме. Технические результаты уже доступны ниже.',
-          fixes: [],
-        },
-      };
+      // Шаг 4: AI-анализ — ждём результат, потом показываем всё вместе
+      let analysis: PageAudit['aiAnalysis'];
+      try {
+        set({
+          progress: { stage: 'ai_analysis', message: 'AI анализирует контент…', percent: 75 },
+        });
 
-      const { report: initialReport } = buildReport(pageWithPlaceholder);
+        const aiRes = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: techData.page }),
+        });
+
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+          if (aiData.ok && aiData.analysis) {
+            analysis = aiData.analysis;
+          } else {
+            analysis = {
+              intent: { detected: 'AI не смог проанализировать', matchScore: 0, gaps: [] },
+              contentScore: 50,
+              summary: 'Тех. аудит завершён. AI-анализ недоступен.',
+              fixes: [],
+            };
+          }
+        } else {
+          throw new Error(`AI HTTP ${aiRes.status}`);
+        }
+      } catch (aiErr) {
+        console.warn('[seo-store] AI analysis failed:', aiErr);
+        analysis = {
+          intent: { detected: 'AI временно недоступен', matchScore: 0, gaps: [] },
+          contentScore: 50,
+          summary: 'Тех. аудит завершён. AI-анализ недоступен — технические результаты ниже.',
+          fixes: [],
+        };
+      }
+
+      // Шаг 5: Собираем полный отчёт с AI
+      const pageWithAi: PageAudit = { ...techData.page, aiAnalysis: analysis };
+      const { report } = buildReport(pageWithAi);
 
       set({
-        report: initialReport,
+        report,
         progress: { stage: 'done', message: 'Готово', percent: 100 },
         isScanning: false,
       });
 
-      // Шаг 5: Сохраняем аудит в БД + Google Sheets
+      // Шаг 6: Сохраняем в БД + Google Sheets
       try {
         await fetch('/api/audit-save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ report: initialReport }),
+          body: JSON.stringify({ report }),
         });
       } catch { /* ignore */ }
-
-      // Шаг 6: AI-анализ в ФОНЕ — простой POST, без SSE
-      // Показываем тех. аудит сразу, AI обновит дашборд когда будет готов
-      const progressMsgs = [
-        'AI определяет поисковый интент…',
-        'AI анализирует контент…',
-        'AI генерирует правки…',
-      ];
-      let msgIdx = 0;
-      const aiProgress = setInterval(() => {
-        msgIdx = (msgIdx + 1) % progressMsgs.length;
-        const cr = get().report;
-        if (cr?.pages[0]?.aiAnalysis) {
-          set({
-            report: {
-              ...cr,
-              pages: [{
-                ...cr.pages[0],
-                aiAnalysis: { ...cr.pages[0].aiAnalysis!, summary: progressMsgs[msgIdx] },
-              }],
-            },
-          });
-        }
-      }, 5000);
-
-      fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ page: techData.page }),
-      })
-        .then(r => r.json())
-        .then(data => {
-          clearInterval(aiProgress);
-          if (data.ok && data.analysis) {
-            const cr = get().report;
-            if (!cr) return;
-            const pageWithAi: PageAudit = { ...techData.page, aiAnalysis: data.analysis };
-            const { report: updated } = buildReport(pageWithAi);
-            set({ report: updated });
-          }
-        })
-        .catch(() => {
-          clearInterval(aiProgress);
-          const cr = get().report;
-          if (!cr) return;
-          set({
-            report: {
-              ...cr,
-              pages: [{
-                ...cr.pages[0],
-                aiAnalysis: {
-                  intent: { detected: 'AI временно недоступен', matchScore: 0, gaps: [] },
-                  contentScore: 50,
-                  summary: 'Тех. аудит завершён. AI-анализ недоступен — результаты ниже.',
-                  fixes: [],
-                },
-              }],
-            },
-          });
-        });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Неизвестная ошибка';
       set({
