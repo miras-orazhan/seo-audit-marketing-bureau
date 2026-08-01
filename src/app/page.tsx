@@ -91,8 +91,8 @@ export default function Home() {
           <>
             <HeroForm onLeadClick={scrollToLead} />
             <StatsBar settings={settings} stats={stats} />
-            <FeaturesSection />
             <HowItWorksSection />
+            <FeaturesSection />
             <ServicesSection services={services} onLeadClick={scrollToLead} />
             <AuditCounter stats={stats} />
             <FaqSection faqs={faqs} />
@@ -203,25 +203,19 @@ function StatsBar({ settings, stats }: { settings: SiteSettings; stats: StatsDat
 function FeaturesSection() {
   const features = [
     {
-      icon: Search,
-      title: 'Техническая проверка сайта',
-      text: 'Смотрим, нет ли на сайте технических ошибок, которые мешают Google находить и правильно показывать ваши страницы: битые ссылки, дубли, медленная загрузка, неудобство на телефоне.',
-      tags: ['Canonical', 'Schema.org', 'Mobile', 'Security'],
-      gradient: 'from-amber-500 to-orange-500',
+      title: 'Техническая проверка',
+      text: 'Смотрим, нет ли на сайте ошибок, которые мешают Google находить ваши страницы: битые ссылки, дубли, медленная загрузка, неудобство на телефоне.',
+      items: ['Мета-теги и заголовки', 'Schema.org разметка', 'Скорость загрузки', 'Мобильная адаптивность'],
     },
     {
-      icon: Bot,
-      title: 'Готовность к поиску через нейросети',
-      text: 'Люди всё чаще спрашивают у ChatGPT или Google AI, а не гуглят по старинке. Проверяем, сможет ли нейросеть найти ваш сайт и процитировать именно вас, а не конкурента.',
-      tags: ['AI Overviews', 'E-E-A-T', 'Entity', 'OG tags'],
-      gradient: 'from-indigo-500 to-purple-500',
+      title: 'Готовность к AI-поиску',
+      text: 'Люди всё чаще спрашивают у ChatGPT или Google AI. Проверяем, сможет ли нейросеть найти ваш сайт и процитировать именно вас.',
+      items: ['Google AI Overviews', 'E-E-A-T факторы', 'Open Graph теги', 'Entity-сигналы'],
     },
     {
-      icon: MessageSquare,
-      title: 'Готовность отвечать на прямые вопросы',
-      text: 'Проверяем, легко ли на вашем сайте найти короткий прямой ответ на вопрос — то, что любят показывать первым и Google, и голосовые помощники.',
-      tags: ['FAQ schema', 'Snippets', 'Intent', 'AI правки'],
-      gradient: 'from-emerald-500 to-teal-500',
+      title: 'Ответы на вопросы',
+      text: 'Проверяем, легко ли найти короткий прямой ответ на вопрос — то, что любят показывать первым Google и голосовые помощники.',
+      items: ['FAQ-schema разметка', 'Featured snippets', 'Поисковый интент', 'AI-генерация правок'],
     },
   ];
 
@@ -231,12 +225,10 @@ function FeaturesSection() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">Возможности</p>
           <h2 className="mt-3 text-balance font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Проверяем сайт{' '}
-            <span className="text-amber-600">с трёх сторон</span>
+            Что мы проверяем
           </h2>
           <p className="mt-4 text-pretty text-base text-neutral-600 sm:text-lg">
-            Классический поиск Google, нейросети вроде ChatGPT и голосовые помощники — сегодня люди ищут информацию по-разному.
-            Мы проверяем, видят ли вас все три.
+            Три направления анализа: технический аудит, готовность к AI-поиску и ответы на вопросы пользователей.
           </p>
         </div>
 
@@ -248,18 +240,18 @@ function FeaturesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="group flex flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:shadow-lg"
+              className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-6 transition-all hover:border-amber-300 hover:shadow-md"
             >
-              <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${f.gradient} shadow-md`}>
-                <f.icon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="mt-4 text-lg font-bold">{f.title}</h3>
+              <h3 className="text-lg font-bold">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-neutral-600">{f.text}</p>
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {f.tags.map((t) => (
-                  <span key={t} className="rounded border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-medium text-neutral-600">{t}</span>
+              <ul className="mt-4 space-y-2 border-t border-neutral-100 pt-4">
+                {f.items.map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-2 text-sm text-neutral-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                    {item}
+                  </li>
                 ))}
-              </div>
+              </ul>
             </motion.div>
           ))}
         </div>
@@ -271,17 +263,14 @@ function FeaturesSection() {
 function HowItWorksSection() {
   const steps = [
     {
-      icon: Link2,
       title: 'Вставьте адрес сайта',
       text: 'Просто вставьте ссылку. Дальше всё делаем мы — проверяем страницу и собираем весь текст, который на ней есть.',
     },
     {
-      icon: Bot,
       title: 'AI разбирает контент',
       text: 'Программа читает ваш сайт как реальный посетитель: понимает, для чего он нужен, оценивает качество текста и готовит правки — что изменить в заголовках и описаниях.',
     },
     {
-      icon: FileText,
       title: 'Вы получаете понятный план',
       text: 'Оценка от 0 до 100 и топ-5 правок — с чего начать в первую очередь. Можно скачать в PDF или спросить у AI-помощника.',
     },
@@ -295,14 +284,11 @@ function HowItWorksSection() {
             Как это работает
           </h2>
           <p className="mt-4 text-base text-neutral-600 sm:text-lg">
-            Три шага от URL до SEO/GEO/AEO-отчёта
+            Три шага от URL до готового отчёта
           </p>
         </div>
 
-        <div className="relative mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-          {/* Соединительная линия на десктопе */}
-          <div className="absolute left-0 right-0 top-6 hidden h-0.5 bg-gradient-to-r from-amber-200 via-indigo-200 to-emerald-200 md:block" />
-
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
           {steps.map((s, i) => (
             <motion.div
               key={i}
@@ -310,15 +296,15 @@ function HowItWorksSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="relative flex flex-col items-center text-center"
+              className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6"
             >
-              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md ring-4 ring-white">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-indigo-500">
-                  <s.icon className="h-5 w-5 text-white" />
-                </div>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-sm font-bold text-white">
+                  {i + 1}
+                </span>
+                <h3 className="text-base font-bold">{s.title}</h3>
               </div>
-              <h3 className="mt-4 text-base font-bold">{s.title}</h3>
-              <p className="mt-2 max-w-xs text-sm leading-relaxed text-neutral-600">{s.text}</p>
+              <p className="text-sm leading-relaxed text-neutral-600">{s.text}</p>
             </motion.div>
           ))}
         </div>
