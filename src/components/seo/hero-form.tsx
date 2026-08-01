@@ -61,21 +61,6 @@ export function HeroForm({ onLeadClick }: { onLeadClick?: () => void }) {
               Не просто список ошибок, а понятные правки: что именно поменять и как.
             </p>
 
-            {/* Trust bullets */}
-            <ul className="mt-6 grid grid-cols-2 gap-y-2.5 gap-x-6 text-sm">
-              {[
-                'Без регистрации и SMS',
-                'PDF-отчёт за 1 клик',
-                '17+ технических проверок',
-                'AI-анализ интента и контента',
-              ].map((t) => (
-                <li key={t} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-400" />
-                  <span className="text-neutral-100">{t}</span>
-                </li>
-              ))}
-            </ul>
-
             <div className="mt-8 hidden lg:block">
               <Button
                 variant="outline"
@@ -152,23 +137,6 @@ export function HeroForm({ onLeadClick }: { onLeadClick?: () => void }) {
                 </span>
               </div>
             </div>
-
-            {/* Кнопка под формой */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-4"
-            >
-              <Button
-                variant="outline"
-                className="w-full border-neutral-600 bg-transparent text-neutral-300 hover:bg-neutral-800 hover:text-white"
-                onClick={onLeadClick}
-              >
-                Заказать SEO-продвижение под ключ
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </motion.div>
           </motion.div>
         </div>
       </div>
