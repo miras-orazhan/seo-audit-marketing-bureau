@@ -7,12 +7,12 @@ async function main() {
   // Услуги
   // ============================================================
   const services = [
-    { title: 'SEO-продвижение', description: 'Выводим в топ-10 Google и Яндекс. Технический аудит, семантика, контент, линкбилдинг.', order: 1 },
-    { title: 'Контекстная реклама', description: 'Google Ads и Яндекс.Директ. Настройка, ведение, оптимизация ROI под ваш бюджет.', order: 2 },
-    { title: 'SMM и таргет', description: 'Instagram, Facebook, TikTok. Контент-стратегия, таргетинг, community management.', order: 3 },
-    { title: 'Веб-разработка', description: 'Сайты на Tilda, Webflow, Next.js. Интернет-магазины, лендинги, корпоративные порталы.', order: 4 },
-    { title: 'Веб-аналитика', description: 'Google Analytics 4, GTM, сквозная аналитика. Настройка целей, дашборды, отчёты.', order: 5 },
-    { title: 'Полный SEO-аудит', description: 'Глубокий технический и контентный разбор сайта с отчётом на 40+ страниц и планом правок.', order: 6 },
+    { title: 'SEO-продвижение', description: 'Выводим в топ-10 Google и Яндекс. Технический аудит, семантическое ядро, контент, линкбилдинг, регулярный мониторинг позиций.', order: 1 },
+    { title: 'GEO-оптимизация', description: 'Оптимизация под AI-поиск: Google AI Overviews, ChatGPT, Perplexity. Структурированные данные, entity-разметка, факты для цитирования.', order: 2 },
+    { title: 'AEO-оптимизация', description: 'Оптимизация под Answer Engines: featured snippets, People Also Ask, голосовой поиск. FAQ-schema, прямые ответы, читабельность.', order: 3 },
+    { title: 'Технический SEO-аудит', description: 'Глубокий технический разбор: 17+ проверок, canonical, schema.org, Core Web Vitals, security headers, мобильная адаптивность.', order: 4 },
+    { title: 'Семантическое ядро', description: 'Сбор и кластеризация ключевых запросов, анализ интента, карта релевантности, контент-план под поисковые запросы.', order: 5 },
+    { title: 'Контент-маркетинг', description: 'SEO-тексты под поисковые интенты, структура H1-H6, FAQ-разметка, оптимизация плотности ключевых слов.', order: 6 },
   ];
 
   for (const s of services) {

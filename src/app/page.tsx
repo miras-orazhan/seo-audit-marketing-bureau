@@ -121,18 +121,19 @@ export default function Home() {
                 />
               </div>
               <p className="mt-4 max-w-md text-sm text-neutral-400">
-                Маркетинговое агентство полного цикла. SEO-продвижение, контекстная реклама,
-                SMM, веб-разработка и аналитика для бизнеса в Казахстане и СНГ.
+                SEO-агентство полного цикла. Технический аудит, GEO/AEO-оптимизация,
+                семантическое ядро и контент-маркетинг для бизнеса в Казахстане и СНГ.
               </p>
             </div>
             <div>
               <h4 className="text-sm font-semibold text-white">Услуги</h4>
               <ul className="mt-3 space-y-1.5 text-sm text-neutral-400">
                 <li>SEO-продвижение</li>
-                <li>Контекстная реклама</li>
-                <li>SMM и таргет</li>
-                <li>Веб-разработка</li>
-                <li>Веб-аналитика</li>
+                <li>GEO-оптимизация</li>
+                <li>AEO-оптимизация</li>
+                <li>Технический SEO-аудит</li>
+                <li>Семантическое ядро</li>
+                <li>Контент-маркетинг</li>
               </ul>
             </div>
             <div>
@@ -202,19 +203,19 @@ function StatsBar({ settings, stats }: { settings: SiteSettings; stats: StatsDat
 function FeaturesSection() {
   const features = [
     {
-      title: 'Технический SEO-аудит',
-      text: '17+ проверок: статус-коды, редиректы, дубли мета-тегов, canonical, schema.org, robots.txt, sitemap, security-заголовки, мобильная адаптивность, alt изображений.',
-      tags: ['Canonical', 'Schema.org', 'Mobile', 'Security'],
+      title: 'SEO-аудит',
+      text: '17+ технических проверок: мета-теги, canonical, schema.org, robots.txt, sitemap, security-заголовки, мобильная адаптивность, семантическое ядро, читабельность, внутренние ссылки.',
+      tags: ['Canonical', 'Schema.org', 'Semantic', 'Readability'],
     },
     {
-      title: 'AI-анализ контента',
-      text: 'AI определяет поисковый интент, оценивает соответствие контента и генерирует правки: переписанные title и description, H2/H3, готовую FAQ-schema JSON-LD.',
-      tags: ['Intent', 'Title rewrite', 'FAQ schema', 'Gaps'],
+      title: 'GEO-анализ',
+      text: 'Оптимизация под AI-поиск: Google AI Overviews, ChatGPT, Perplexity. Проверка структурированных данных, entity-сигналов, E-E-A-T факторов, OG-тегов.',
+      tags: ['AI Overviews', 'E-E-A-T', 'Entity', 'OG tags'],
     },
     {
-      title: 'Приоритизация и roadmap',
-      text: 'Скор 0–100 и roadmap из топ-5 правок по impact/effort. Не 200 строк проблем — а план действий для разработчика. Экспорт в PDF.',
-      tags: ['Score 0–100', 'Roadmap топ-5', 'Impact/Effort', 'PDF экспорт'],
+      title: 'AEO-анализ',
+      text: 'Готовность к Answer Engines: FAQ-schema, featured snippets, голосовой поиск. AI генерирует прямые ответы, H2/H3, переписанные title и description.',
+      tags: ['FAQ schema', 'Snippets', 'Intent', 'AI правки'],
     },
   ];
 
@@ -224,12 +225,12 @@ function FeaturesSection() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">Возможности</p>
           <h2 className="mt-3 text-balance font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Не просто список проблем —{' '}
-            <span className="text-amber-600">готовые правки</span>
+            SEO · GEO · AEO —{' '}
+            <span className="text-amber-600">полный анализ</span>
           </h2>
           <p className="mt-4 text-pretty text-base text-neutral-600 sm:text-lg">
-            Ahrefs находит 200 проблем. Marketing Bureau — 5 правок, которые сделать первыми, с
-            готовым кодом для вставки.
+            Технический аудит + оптимизация под AI-поиск + готовность к Answer Engines.
+            4 скор-категории и roadmap из топ-5 правок.
           </p>
         </div>
 
@@ -291,7 +292,7 @@ function HowItWorksSection() {
             Как это работает
           </h2>
           <p className="mt-4 text-base text-neutral-600 sm:text-lg">
-            Три шага от URL до готового плана SEO-оптимизации
+            Три шага от URL до SEO/GEO/AEO-отчёта
           </p>
         </div>
 
@@ -318,26 +319,26 @@ function HowItWorksSection() {
 
 function ServicesSection({ services, onLeadClick }: { services: ServiceItem[]; onLeadClick?: () => void }) {
   const fallback = [
-    { title: 'SEO-продвижение', description: 'Выводим в топ-10 Google и Яндекс.' },
-    { title: 'Контекстная реклама', description: 'Google Ads и Яндекс.Директ.' },
-    { title: 'SMM и таргет', description: 'Instagram, Facebook, TikTok.' },
-    { title: 'Веб-разработка', description: 'Сайты на Tilda, Webflow, Next.js.' },
-    { title: 'Веб-аналитика', description: 'Google Analytics 4, GTM.' },
-    { title: 'Полный SEO-аудит', description: 'Глубокий разбор с планом правок.' },
+    { title: 'SEO-продвижение', description: 'Выводим в топ-10 Google и Яндекс. Технический аудит, семантика, контент, линкбилдинг.' },
+    { title: 'GEO-оптимизация', description: 'Оптимизация под AI-поиск: Google AI Overviews, ChatGPT, Perplexity.' },
+    { title: 'AEO-оптимизация', description: 'Оптимизация под Answer Engines: featured snippets, FAQ-schema, голосовой поиск.' },
+    { title: 'Технический SEO-аудит', description: '17+ проверок: canonical, schema.org, security, мобильная адаптивность.' },
+    { title: 'Семантическое ядро', description: 'Сбор и кластеризация ключей, анализ интента, контент-план.' },
+    { title: 'Контент-маркетинг', description: 'SEO-тексты под интенты, H1-H6, FAQ-разметка.' },
   ];
   const items = services.length > 0 ? services : fallback;
   return (
     <section id="services" className="py-14 sm:py-20 bg-neutral-50">
       <div className="mx-auto max-w-7xl px-4">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">Услуги агентства</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">SEO · GEO · AEO</p>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Полный цикл услуг{' '}
-            <span className="text-amber-600">Marketing Bureau</span>
+            Услуги{' '}
+            <span className="text-amber-600">SEO-продвижения</span>
           </h2>
           <p className="mt-4 text-pretty text-base text-neutral-600 sm:text-lg">
-            Бесплатный SEO-аудит — это первый шаг. Если нужна полноценная работа под ключ —
-            у нас есть всё: от семантики до веб-разработки.
+            Полный спектр услуг по поисковой оптимизации: от технического аудита до
+            оптимизации под AI-поиск и Answer Engines.
           </p>
         </div>
 

@@ -24,9 +24,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://marketingbureau.kz"),
-  title: "Бесплатный AI SEO-аудит | Marketing Bureau",
+  title: "SEO · GEO · AEO аудит сайта | Marketing Bureau",
   description:
-    "Бесплатный AI SEO-аудит сайта: технический разбор, анализ контента, готовые правки. SEO в Казахстане.",
+    "Бесплатный AI SEO-аудит: технический разбор, GEO/AEO оптимизация, семантика, готовые правки. SEO в Казахстане.",
   keywords: [
     "SEO аудит",
     "SEO аудит сайта",
@@ -50,9 +50,9 @@ export const metadata: Metadata = {
     apple: "/favicon.ico",
   },
   openGraph: {
-    title: "Бесплатный AI SEO-аудит | Marketing Bureau",
+    title: "SEO · GEO · AEO аудит сайта | Marketing Bureau",
     description:
-      "Бесплатный AI SEO-аудит сайта: технический разбор, анализ контента, готовые правки. SEO в Казахстане.",
+      "Бесплатный AI SEO-аудит: технический разбор, GEO/AEO оптимизация, семантика, готовые правки. SEO в Казахстане.",
     url: "https://marketingbureau.kz",
     siteName: "Marketing Bureau",
     type: "website",
@@ -62,14 +62,14 @@ export const metadata: Metadata = {
         url: "/logo.png",
         width: 3990,
         height: 904,
-        alt: "Marketing Bureau — маркетинговое агентство полного цикла",
+        alt: "Marketing Bureau — SEO, GEO, AEO оптимизация",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Бесплатный AI SEO-аудит | Marketing Bureau",
-    description: "Бесплатный AI SEO-аудит сайта: технический разбор, анализ контента, готовые правки. SEO в Казахстане.",
+    title: "SEO · GEO · AEO аудит сайта | Marketing Bureau",
+    description: "Бесплатный AI SEO-аудит: технический разбор, GEO/AEO оптимизация, семантика. SEO в Казахстане.",
     images: ["/logo.png"],
   },
   robots: {
